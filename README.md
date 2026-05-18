@@ -1,3 +1,8 @@
+
+<img width="1254" height="1254" alt="ChatGPT Image May 15, 2026, 02_03_01 AM" src="https://github.com/user-attachments/assets/7260b353-e7cd-4374-baa1-f2d75fd4cb59" />
+
+
+
 # Goblin Labs
 
 **The next decade of agents will look more like people.**
