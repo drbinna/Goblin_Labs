@@ -8,6 +8,9 @@ import {
   listAvatars,
   listVoices,
   startPreview,
+  DEFAULT_AVATAR_ID,
+  DEFAULT_VOICE_ID,
+  DEFAULT_LLM_ID,
   type PersonaConfig,
 } from "@/app/lib/anam";
 
@@ -76,8 +79,8 @@ export default function Studio() {
   const [vertical, setVertical] = useState<Vertical>(VERTICALS[0]);
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [voices, setVoices] = useState<Voice[]>([]);
-  const [avatarId, setAvatarId] = useState<string>("");
-  const [voiceId, setVoiceId] = useState<string>("");
+  const [avatarId, setAvatarId] = useState<string>(DEFAULT_AVATAR_ID);
+  const [voiceId, setVoiceId] = useState<string>(DEFAULT_VOICE_ID);
   const [extraPrompt, setExtraPrompt] = useState("");
   const [tone, setTone] = useState(VERTICALS[0].suggestedTone);
   const [previewing, setPreviewing] = useState(false);
@@ -99,8 +102,8 @@ export default function Studio() {
         if (cancelled) return;
         setAvatars(a);
         setVoices(v);
-        if (a[0]) setAvatarId(a[0].id);
-        if (v[0]) setVoiceId(v[0].id);
+        if (a[0] && avatarId === DEFAULT_AVATAR_ID) setAvatarId(a[0].id);
+        if (v[0] && voiceId === DEFAULT_VOICE_ID) setVoiceId(v[0].id);
       } catch (e: any) {
         if (!cancelled) setCatalogErr(e.message ?? String(e));
       } finally {
@@ -128,8 +131,9 @@ export default function Studio() {
   const config: PersonaConfig = useMemo(
     () => ({
       name: name.trim() || `${vertical.title} Persona`,
-      avatarId,
-      voiceId,
+      avatarId: avatarId || DEFAULT_AVATAR_ID,
+      voiceId: voiceId || DEFAULT_VOICE_ID,
+      llmId: DEFAULT_LLM_ID,
       systemPrompt: fullPrompt,
     }),
     [name, vertical, avatarId, voiceId, fullPrompt],

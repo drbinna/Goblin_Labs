@@ -5,8 +5,12 @@ export type PersonaConfig = {
   avatarId: string;
   voiceId: string;
   systemPrompt: string;
-  llmId?: string;
+  llmId: string;
 };
+
+export const DEFAULT_LLM_ID = "a7cf662c-2ace-4de1-a21e-ef0fbf144bb7";
+export const DEFAULT_AVATAR_ID = "30fa96d0-26c4-4e55-94a0-517025942e18";
+export const DEFAULT_VOICE_ID = "6bfbe25a-979d-40f3-a92b-5394170af54b";
 
 export async function fetchSessionToken(input: {
   personaId?: string;
@@ -17,8 +21,11 @@ export async function fetchSessionToken(input: {
     headers: { "content-type": "application/json" },
     body: JSON.stringify(input),
   });
-  if (!res.ok) throw new Error(`session-token failed: ${res.status}`);
-  const data = await res.json();
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`session-token ${res.status}: ${text.slice(0, 300)}`);
+  }
+  const data = JSON.parse(text);
   return data.sessionToken ?? data.token;
 }
 
