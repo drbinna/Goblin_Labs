@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Play, Sparkles } from "lucide-react";
 import { EtherealShadow } from "@/app/components/ui/etheral-shadow";
 import {
   createPersona,
@@ -11,6 +11,8 @@ import {
   DEFAULT_AVATAR_ID,
   DEFAULT_VOICE_ID,
   DEFAULT_LLM_ID,
+  type Avatar,
+  type Voice,
   type PersonaConfig,
 } from "@/app/lib/anam";
 
@@ -61,9 +63,6 @@ const VERTICALS: Vertical[] = [
 
 const STEPS = ["Vertical", "Avatar", "Voice", "Personality", "Preview"] as const;
 type Step = (typeof STEPS)[number];
-
-type Avatar = { id: string; name: string; thumbnail?: string };
-type Voice = { id: string; name: string; description?: string };
 
 function toneToPromptSuffix(t: { formality: number; verbosity: number; warmth: number }) {
   const parts: string[] = [];
@@ -316,32 +315,14 @@ export default function Studio() {
                 <CatalogEmpty kind="avatars" />
               ) : (
                 <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                  {avatars.map((a) => {
-                    const selected = a.id === avatarId;
-                    return (
-                      <button
-                        key={a.id}
-                        onClick={() => setAvatarId(a.id)}
-                        className={`group flex flex-col overflow-hidden rounded-xl border transition-colors ${
-                          selected ? "border-foreground" : "border-border/60 hover:border-foreground/40"
-                        }`}
-                      >
-                        <div className="aspect-[3/4] w-full bg-foreground/[0.03]">
-                          {a.thumbnail ? (
-                            <img src={a.thumbnail} alt={a.name} className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                              No preview
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between px-3 py-2 text-[12px]">
-                          <span className="truncate">{a.name}</span>
-                          {selected && <Check className="h-3.5 w-3.5" />}
-                        </div>
-                      </button>
-                    );
-                  })}
+                  {avatars.map((a) => (
+                    <AvatarCard
+                      key={a.id}
+                      avatar={a}
+                      selected={a.id === avatarId}
+                      onSelect={() => setAvatarId(a.id)}
+                    />
+                  ))}
                 </div>
               )}
             </div>
@@ -356,26 +337,14 @@ export default function Studio() {
                 <CatalogEmpty kind="voices" />
               ) : (
                 <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {voices.map((v) => {
-                    const selected = v.id === voiceId;
-                    return (
-                      <button
-                        key={v.id}
-                        onClick={() => setVoiceId(v.id)}
-                        className={`flex items-start justify-between gap-3 rounded-xl border p-4 text-left transition-colors ${
-                          selected ? "border-foreground bg-foreground/5" : "border-border/60 hover:border-foreground/40"
-                        }`}
-                      >
-                        <div className="min-w-0">
-                          <div className="text-[14px] font-medium">{v.name}</div>
-                          {v.description && (
-                            <div className="mt-0.5 text-[12px] text-muted-foreground">{v.description}</div>
-                          )}
-                        </div>
-                        {selected && <Check className="mt-0.5 h-4 w-4 shrink-0" />}
-                      </button>
-                    );
-                  })}
+                  {voices.map((v) => (
+                    <VoiceCard
+                      key={v.id}
+                      voice={v}
+                      selected={v.id === voiceId}
+                      onSelect={() => setVoiceId(v.id)}
+                    />
+                  ))}
                 </div>
               )}
             </div>
@@ -560,6 +529,139 @@ function CatalogLoading() {
     <div className="mt-8 flex items-center justify-center gap-2 text-[13px] text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" /> Loading from Anam...
     </div>
+  );
+}
+
+function AvatarCard({
+  avatar, selected, onSelect,
+}: {
+  avatar: Avatar; selected: boolean; onSelect: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  return (
+    <button
+      onClick={onSelect}
+      onMouseEnter={() => {
+        const v = videoRef.current;
+        if (v) void v.play().catch(() => {});
+      }}
+      onMouseLeave={() => {
+        const v = videoRef.current;
+        if (v) {
+          v.pause();
+          v.currentTime = 0;
+        }
+      }}
+      className={`group relative flex flex-col overflow-hidden rounded-xl border transition-colors ${
+        selected ? "border-foreground" : "border-border/60 hover:border-foreground/40"
+      }`}
+    >
+      <div className="relative aspect-[3/4] w-full bg-foreground/[0.04]">
+        {avatar.imageUrl ? (
+          <img
+            src={avatar.imageUrl}
+            alt={avatar.name}
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            No preview
+          </div>
+        )}
+        {avatar.videoUrl && (
+          <video
+            ref={videoRef}
+            src={avatar.videoUrl}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          />
+        )}
+        {selected && (
+          <div className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-foreground text-background">
+            <Check className="h-3.5 w-3.5" />
+          </div>
+        )}
+      </div>
+      <div className="flex items-center justify-between gap-2 px-3 py-2 text-[12px]">
+        <div className="min-w-0 text-left">
+          <div className="truncate font-medium">{avatar.name}</div>
+          {avatar.variant && (
+            <div className="truncate text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">
+              {avatar.variant}
+            </div>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function VoiceCard({
+  voice, selected, onSelect,
+}: {
+  voice: Voice; selected: boolean; onSelect: () => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+
+  function togglePlay(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!voice.sampleUrl) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio(voice.sampleUrl);
+      audioRef.current.addEventListener("ended", () => setPlaying(false));
+    }
+    if (playing) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setPlaying(false);
+    } else {
+      void audioRef.current.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    }
+  }
+
+  return (
+    <button
+      onClick={onSelect}
+      className={`flex items-start justify-between gap-3 rounded-xl border p-4 text-left transition-colors ${
+        selected ? "border-foreground bg-foreground/5" : "border-border/60 hover:border-foreground/40"
+      }`}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-[14px] font-medium">{voice.name}</span>
+          {voice.gender && (
+            <span className="rounded-full border border-border/60 px-1.5 py-0.5 text-[9.5px] uppercase tracking-[0.14em] text-muted-foreground">
+              {voice.gender.toLowerCase()}
+            </span>
+          )}
+          {voice.country && (
+            <span className="text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
+              {voice.country}
+            </span>
+          )}
+        </div>
+        {voice.description && (
+          <div className="mt-1 line-clamp-2 text-[12px] text-muted-foreground">{voice.description}</div>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        {voice.sampleUrl && (
+          <span
+            role="button"
+            onClick={togglePlay}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-border/60 hover:border-foreground/60"
+          >
+            <Play className={`h-3.5 w-3.5 ${playing ? "opacity-50" : ""}`} />
+          </span>
+        )}
+        {selected && <Check className="mt-1 h-4 w-4" />}
+      </div>
+    </button>
   );
 }
 

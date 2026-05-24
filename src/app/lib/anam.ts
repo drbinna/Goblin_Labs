@@ -39,18 +39,52 @@ export async function createPersona(config: PersonaConfig): Promise<{ id: string
   return res.json();
 }
 
-export async function listVoices(): Promise<Array<{ id: string; name: string; description?: string }>> {
+export type Voice = {
+  id: string;
+  name: string;
+  description?: string;
+  sampleUrl?: string;
+  gender?: string;
+  country?: string;
+  tags?: string[];
+};
+
+export type Avatar = {
+  id: string;
+  name: string;
+  variant?: string;
+  imageUrl?: string;
+  videoUrl?: string;
+};
+
+export async function listVoices(): Promise<Voice[]> {
   const res = await fetch("/api/voices");
   if (!res.ok) throw new Error(`voices failed: ${res.status}`);
   const data = await res.json();
-  return data.data ?? data ?? [];
+  const items = data.data ?? data ?? [];
+  return items.map((v: any) => ({
+    id: v.id,
+    name: v.displayName ?? v.name ?? v.id,
+    description: v.description,
+    sampleUrl: v.sampleUrl ?? v.previewSampleUrl,
+    gender: v.gender,
+    country: v.country,
+    tags: v.displayTags,
+  }));
 }
 
-export async function listAvatars(): Promise<Array<{ id: string; name: string; thumbnail?: string }>> {
+export async function listAvatars(): Promise<Avatar[]> {
   const res = await fetch("/api/avatars");
   if (!res.ok) throw new Error(`avatars failed: ${res.status}`);
   const data = await res.json();
-  return data.data ?? data ?? [];
+  const items = data.data ?? data ?? [];
+  return items.map((a: any) => ({
+    id: a.id,
+    name: a.displayName ?? a.name ?? a.id,
+    variant: a.variantName,
+    imageUrl: a.imageUrl,
+    videoUrl: a.videoUrl,
+  }));
 }
 
 export async function startPreview(
