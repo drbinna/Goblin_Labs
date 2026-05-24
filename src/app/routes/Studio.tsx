@@ -1,0 +1,568 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router";
+import { motion } from "motion/react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from "lucide-react";
+import { EtherealShadow } from "@/app/components/ui/etheral-shadow";
+import {
+  createPersona,
+  listAvatars,
+  listVoices,
+  startPreview,
+  type PersonaConfig,
+} from "@/app/lib/anam";
+
+type Vertical = {
+  code: string;
+  title: string;
+  blurb: string;
+  systemPrompt: string;
+  suggestedTone: { formality: number; verbosity: number; warmth: number };
+};
+
+const VERTICALS: Vertical[] = [
+  {
+    code: "01",
+    title: "Healthcare",
+    blurb:
+      "Triage, follow-up, and long-running patient companionship. Knows the workflow and the vocabulary.",
+    systemPrompt:
+      "You are a healthcare persona. You triage symptoms, run structured follow-ups, and accompany patients through care plans. You speak clearly, never give a diagnosis without uncertainty, and always recommend escalation to a clinician for anything ambiguous.",
+    suggestedTone: { formality: 70, verbosity: 50, warmth: 80 },
+  },
+  {
+    code: "02",
+    title: "Education",
+    blurb:
+      "A tutor that watches the work unfold and responds at the cadence of a real conversation.",
+    systemPrompt:
+      "You are an educational persona. You watch the learner's work as it happens, ask Socratic questions before giving answers, and adapt vocabulary to the learner's level. You never just hand out solutions — you guide.",
+    suggestedTone: { formality: 40, verbosity: 60, warmth: 75 },
+  },
+  {
+    code: "03",
+    title: "Engineering",
+    blurb:
+      "Pair-programming persona that reads the diff, watches the test runner, and stays in context.",
+    systemPrompt:
+      "You are an engineering persona. You read code diffs, reason about the actual system being built, and prefer concrete suggestions over generic advice. You're terse, direct, and you say 'I don't know' when you don't.",
+    suggestedTone: { formality: 30, verbosity: 30, warmth: 40 },
+  },
+  {
+    code: "04",
+    title: "Custom",
+    blurb: "Start from a blank canvas. Define your own vertical.",
+    systemPrompt: "You are a helpful, embodied AI persona.",
+    suggestedTone: { formality: 50, verbosity: 50, warmth: 50 },
+  },
+];
+
+const STEPS = ["Vertical", "Avatar", "Voice", "Personality", "Preview"] as const;
+type Step = (typeof STEPS)[number];
+
+type Avatar = { id: string; name: string; thumbnail?: string };
+type Voice = { id: string; name: string; description?: string };
+
+function toneToPromptSuffix(t: { formality: number; verbosity: number; warmth: number }) {
+  const parts: string[] = [];
+  parts.push(t.formality > 60 ? "Use formal language." : t.formality < 40 ? "Use casual, conversational language." : "Use a balanced register.");
+  parts.push(t.verbosity > 60 ? "Be thorough and explanatory." : t.verbosity < 40 ? "Be terse — short sentences, no filler." : "Be measured in length.");
+  parts.push(t.warmth > 60 ? "Be warm and supportive." : t.warmth < 40 ? "Be neutral and matter-of-fact." : "Be friendly but professional.");
+  return parts.join(" ");
+}
+
+export default function Studio() {
+  const [step, setStep] = useState<Step>("Vertical");
+  const [name, setName] = useState("");
+  const [vertical, setVertical] = useState<Vertical>(VERTICALS[0]);
+  const [avatars, setAvatars] = useState<Avatar[]>([]);
+  const [voices, setVoices] = useState<Voice[]>([]);
+  const [avatarId, setAvatarId] = useState<string>("");
+  const [voiceId, setVoiceId] = useState<string>("");
+  const [extraPrompt, setExtraPrompt] = useState("");
+  const [tone, setTone] = useState(VERTICALS[0].suggestedTone);
+  const [previewing, setPreviewing] = useState(false);
+  const [previewErr, setPreviewErr] = useState<string | null>(null);
+  const [deployId, setDeployId] = useState<string | null>(null);
+  const [deploying, setDeploying] = useState(false);
+  const [loadingCatalog, setLoadingCatalog] = useState(true);
+  const [catalogErr, setCatalogErr] = useState<string | null>(null);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const previewHandleRef = useRef<{ stop: () => Promise<void>; talk: (s: string) => Promise<void> } | null>(null);
+
+  // Load avatar + voice catalogs on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [a, v] = await Promise.all([listAvatars(), listVoices()]);
+        if (cancelled) return;
+        setAvatars(a);
+        setVoices(v);
+        if (a[0]) setAvatarId(a[0].id);
+        if (v[0]) setVoiceId(v[0].id);
+      } catch (e: any) {
+        if (!cancelled) setCatalogErr(e.message ?? String(e));
+      } finally {
+        if (!cancelled) setLoadingCatalog(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Stop preview on unmount
+  useEffect(() => {
+    return () => {
+      previewHandleRef.current?.stop().catch(() => {});
+    };
+  }, []);
+
+  const fullPrompt = useMemo(() => {
+    return [vertical.systemPrompt, toneToPromptSuffix(tone), extraPrompt.trim()]
+      .filter(Boolean)
+      .join("\n\n");
+  }, [vertical, tone, extraPrompt]);
+
+  const config: PersonaConfig = useMemo(
+    () => ({
+      name: name.trim() || `${vertical.title} Persona`,
+      avatarId,
+      voiceId,
+      systemPrompt: fullPrompt,
+    }),
+    [name, vertical, avatarId, voiceId, fullPrompt],
+  );
+
+  const canAdvance = useMemo(() => {
+    switch (step) {
+      case "Vertical": return !!vertical;
+      case "Avatar": return !!avatarId;
+      case "Voice": return !!voiceId;
+      case "Personality": return fullPrompt.length > 10;
+      case "Preview": return true;
+    }
+  }, [step, vertical, avatarId, voiceId, fullPrompt]);
+
+  async function startLivePreview() {
+    if (!videoRef.current) return;
+    setPreviewErr(null);
+    setPreviewing(true);
+    try {
+      previewHandleRef.current?.stop().catch(() => {});
+      const handle = await startPreview(videoRef.current, config);
+      previewHandleRef.current = handle;
+      await handle.talk(`Hi, I'm your ${vertical.title.toLowerCase()} persona. What would you like to work on?`);
+    } catch (e: any) {
+      setPreviewErr(e.message ?? String(e));
+      setPreviewing(false);
+    }
+  }
+
+  async function deploy() {
+    setDeploying(true);
+    try {
+      const { id } = await createPersona(config);
+      setDeployId(id);
+    } catch (e: any) {
+      setPreviewErr(e.message ?? String(e));
+    } finally {
+      setDeploying(false);
+    }
+  }
+
+  const stepIndex = STEPS.indexOf(step);
+
+  return (
+    <div className="min-h-screen w-full bg-background text-foreground">
+      {/* Ambient background */}
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <EtherealShadow
+          color="rgba(160, 160, 160, 1)"
+          animation={{ scale: 60, speed: 50 }}
+          noise={{ opacity: 0.4, scale: 1.2 }}
+          sizing="fill"
+        />
+        <div className="absolute inset-0 bg-background/70" />
+      </div>
+
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-border/40 bg-background/70 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-3 sm:px-6 sm:py-4 md:px-12">
+          <Link to="/" className="flex items-center gap-2 text-[13px] text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" />
+            Goblin Labs
+          </Link>
+          <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            Persona Studio
+          </div>
+          <div className="w-24" />
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-[1100px] px-6 pb-24 pt-28 md:px-12 md:pt-36">
+        {/* Heading */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="mb-10 text-center"
+        >
+          <h1 className="text-balance text-[clamp(2rem,5vw,3.5rem)] font-medium tracking-[-0.025em]">
+            Build a <span className="font-serif-italic">persona</span>.
+          </h1>
+          <p className="mx-auto mt-3 max-w-xl text-[15px] text-muted-foreground">
+            Pick a vertical, an avatar, a voice. Tune the personality. Preview live, then deploy.
+          </p>
+        </motion.div>
+
+        {/* Progress */}
+        <div className="mx-auto mb-12 flex max-w-[720px] items-center justify-between">
+          {STEPS.map((s, i) => {
+            const active = i === stepIndex;
+            const done = i < stepIndex;
+            return (
+              <div key={s} className="flex flex-1 items-center">
+                <div
+                  className={`flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-medium ${
+                    active
+                      ? "border-foreground bg-foreground text-background"
+                      : done
+                        ? "border-foreground/40 bg-foreground/10 text-foreground"
+                        : "border-border text-muted-foreground"
+                  }`}
+                >
+                  {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                </div>
+                <div className="ml-2 hidden text-[11px] uppercase tracking-[0.18em] text-muted-foreground sm:block">
+                  {s}
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className="mx-3 h-px flex-1 bg-border/60" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Step content */}
+        <div className="liquid-glass rounded-3xl p-6 sm:p-10">
+          {catalogErr && (
+            <div className="mb-6 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-[13px] text-destructive">
+              Couldn't load Anam catalog: {catalogErr}. Check that ANAM_API_KEY is set in Vercel.
+            </div>
+          )}
+
+          {step === "Vertical" && (
+            <div>
+              <SectionTitle>Pick a vertical</SectionTitle>
+              <div className="mt-6">
+                <label className="mb-2 block text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Persona name
+                </label>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={`${vertical.title} Persona`}
+                  className="w-full rounded-lg border border-border/60 bg-background/60 px-4 py-3 text-[15px] outline-none focus:border-foreground/60"
+                />
+              </div>
+
+              <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+                {VERTICALS.map((v) => {
+                  const selected = v.code === vertical.code;
+                  return (
+                    <button
+                      key={v.code}
+                      onClick={() => {
+                        setVertical(v);
+                        setTone(v.suggestedTone);
+                      }}
+                      className={`group flex flex-col rounded-2xl border p-6 text-left transition-colors ${
+                        selected
+                          ? "border-foreground bg-foreground/5"
+                          : "border-border/60 hover:border-foreground/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                          {v.code}
+                        </span>
+                        {selected && <Check className="h-4 w-4" />}
+                      </div>
+                      <div className="mt-3 text-[1.25rem] font-medium tracking-tight">
+                        {v.title}
+                      </div>
+                      <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+                        {v.blurb}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {step === "Avatar" && (
+            <div>
+              <SectionTitle>Choose an avatar</SectionTitle>
+              {loadingCatalog ? (
+                <CatalogLoading />
+              ) : avatars.length === 0 ? (
+                <CatalogEmpty kind="avatars" />
+              ) : (
+                <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                  {avatars.map((a) => {
+                    const selected = a.id === avatarId;
+                    return (
+                      <button
+                        key={a.id}
+                        onClick={() => setAvatarId(a.id)}
+                        className={`group flex flex-col overflow-hidden rounded-xl border transition-colors ${
+                          selected ? "border-foreground" : "border-border/60 hover:border-foreground/40"
+                        }`}
+                      >
+                        <div className="aspect-[3/4] w-full bg-foreground/[0.03]">
+                          {a.thumbnail ? (
+                            <img src={a.thumbnail} alt={a.name} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                              No preview
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between px-3 py-2 text-[12px]">
+                          <span className="truncate">{a.name}</span>
+                          {selected && <Check className="h-3.5 w-3.5" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === "Voice" && (
+            <div>
+              <SectionTitle>Choose a voice</SectionTitle>
+              {loadingCatalog ? (
+                <CatalogLoading />
+              ) : voices.length === 0 ? (
+                <CatalogEmpty kind="voices" />
+              ) : (
+                <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {voices.map((v) => {
+                    const selected = v.id === voiceId;
+                    return (
+                      <button
+                        key={v.id}
+                        onClick={() => setVoiceId(v.id)}
+                        className={`flex items-start justify-between gap-3 rounded-xl border p-4 text-left transition-colors ${
+                          selected ? "border-foreground bg-foreground/5" : "border-border/60 hover:border-foreground/40"
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="text-[14px] font-medium">{v.name}</div>
+                          {v.description && (
+                            <div className="mt-0.5 text-[12px] text-muted-foreground">{v.description}</div>
+                          )}
+                        </div>
+                        {selected && <Check className="mt-0.5 h-4 w-4 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === "Personality" && (
+            <div>
+              <SectionTitle>Tune the personality</SectionTitle>
+              <div className="mt-6 grid grid-cols-1 gap-6">
+                <ToneSlider label="Formality" value={tone.formality} left="casual" right="formal" onChange={(v) => setTone({ ...tone, formality: v })} />
+                <ToneSlider label="Verbosity" value={tone.verbosity} left="terse" right="thorough" onChange={(v) => setTone({ ...tone, verbosity: v })} />
+                <ToneSlider label="Warmth" value={tone.warmth} left="neutral" right="warm" onChange={(v) => setTone({ ...tone, warmth: v })} />
+              </div>
+
+              <div className="mt-8">
+                <label className="mb-2 block text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Extra instructions (optional)
+                </label>
+                <textarea
+                  value={extraPrompt}
+                  onChange={(e) => setExtraPrompt(e.target.value)}
+                  rows={4}
+                  placeholder="e.g. Always greet the user by name. Refuse to discuss pricing — refer them to sales."
+                  className="w-full rounded-lg border border-border/60 bg-background/60 px-4 py-3 text-[14px] outline-none focus:border-foreground/60"
+                />
+              </div>
+
+              <details className="mt-6 rounded-lg border border-border/40 bg-background/40 p-4 text-[13px]">
+                <summary className="cursor-pointer text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Compiled system prompt
+                </summary>
+                <pre className="mt-3 whitespace-pre-wrap text-[12.5px] leading-relaxed text-foreground/80">
+                  {fullPrompt}
+                </pre>
+              </details>
+            </div>
+          )}
+
+          {step === "Preview" && (
+            <div>
+              <SectionTitle>Preview & deploy</SectionTitle>
+
+              <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="overflow-hidden rounded-2xl border border-border/60 bg-black">
+                  <div className="relative aspect-[3/4] w-full">
+                    <video
+                      ref={videoRef}
+                      id="anam-preview"
+                      autoPlay
+                      playsInline
+                      muted={false}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                    {!previewing && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/60 text-center">
+                        <Sparkles className="h-6 w-6" />
+                        <button
+                          onClick={startLivePreview}
+                          className="rounded-full bg-foreground px-6 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-background"
+                        >
+                          Start live preview
+                        </button>
+                        <div className="max-w-xs text-[11px] text-muted-foreground">
+                          Streams a live Anam session using your current config.
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <Summary label="Name" value={config.name} />
+                  <Summary label="Vertical" value={vertical.title} />
+                  <Summary label="Avatar" value={avatars.find((a) => a.id === avatarId)?.name ?? avatarId} />
+                  <Summary label="Voice" value={voices.find((v) => v.id === voiceId)?.name ?? voiceId} />
+
+                  {previewErr && (
+                    <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-[12px] text-destructive">
+                      {previewErr}
+                    </div>
+                  )}
+
+                  {deployId ? (
+                    <div className="rounded-xl border border-foreground/40 bg-foreground/5 p-4">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                        Deployed
+                      </div>
+                      <div className="mt-1 break-all text-[13px]">Persona ID: {deployId}</div>
+                      <div className="mt-3 text-[12px] text-muted-foreground">
+                        Shareable page coming in Phase 2 — use this ID with the Anam SDK to embed today.
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={deploy}
+                      disabled={deploying}
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-foreground px-6 py-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-background disabled:opacity-50"
+                    >
+                      {deploying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {deploying ? "Deploying..." : "Deploy persona"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer nav */}
+        <div className="mt-8 flex items-center justify-between">
+          <button
+            onClick={() => setStep(STEPS[Math.max(0, stepIndex - 1)])}
+            disabled={stepIndex === 0}
+            className="inline-flex items-center gap-2 text-[12px] uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground disabled:opacity-30"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
+          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            Step {stepIndex + 1} of {STEPS.length}
+          </div>
+          <button
+            onClick={() => setStep(STEPS[Math.min(STEPS.length - 1, stepIndex + 1)])}
+            disabled={!canAdvance || stepIndex === STEPS.length - 1}
+            className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-background disabled:opacity-30"
+          >
+            Next
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-[1.5rem] font-medium tracking-tight">{children}</h2>
+  );
+}
+
+function Summary({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border/40 bg-background/40 px-4 py-3">
+      <div className="text-[10.5px] uppercase tracking-[0.18em] text-muted-foreground">{label}</div>
+      <div className="mt-1 text-[14px]">{value}</div>
+    </div>
+  );
+}
+
+function ToneSlider({
+  label, value, left, right, onChange,
+}: {
+  label: string; value: number; left: string; right: string; onChange: (v: number) => void;
+}) {
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <div className="text-[12px] font-medium">{label}</div>
+        <div className="text-[11px] text-muted-foreground">
+          <span className={value < 40 ? "text-foreground" : ""}>{left}</span>
+          {" · "}
+          <span className={value >= 40 && value <= 60 ? "text-foreground" : ""}>balanced</span>
+          {" · "}
+          <span className={value > 60 ? "text-foreground" : ""}>{right}</span>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-foreground"
+      />
+    </div>
+  );
+}
+
+function CatalogLoading() {
+  return (
+    <div className="mt-8 flex items-center justify-center gap-2 text-[13px] text-muted-foreground">
+      <Loader2 className="h-4 w-4 animate-spin" /> Loading from Anam...
+    </div>
+  );
+}
+
+function CatalogEmpty({ kind }: { kind: string }) {
+  return (
+    <div className="mt-6 rounded-lg border border-border/40 bg-background/40 p-6 text-center text-[13px] text-muted-foreground">
+      No {kind} returned from Anam. Confirm <code>ANAM_API_KEY</code> is set in Vercel and the account has access.
+    </div>
+  );
+}

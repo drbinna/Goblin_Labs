@@ -9,6 +9,7 @@ import founderPortrait from "@/imports/Screenshot_2026-05-15_at_2.44.17_AM.png";
 const NAV = [
   { label: "Home", href: "#top" },
   { label: "Personas", href: "#personas" },
+  { label: "Studio", href: "/studio" },
 ];
 
 const VERTICALS = [
