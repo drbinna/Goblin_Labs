@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
-import { ArrowLeft, ArrowRight, Check, Loader2, Play, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2, Play, Plus, Sparkles, Upload, X } from "lucide-react";
 import { EtherealShadow } from "@/app/components/ui/etheral-shadow";
 import {
+  createAvatarFromFile,
+  createAvatarFromUrl,
   createPersona,
   listAvatars,
   listVoices,
@@ -82,6 +84,14 @@ export default function Studio() {
   const [voiceId, setVoiceId] = useState<string>(DEFAULT_VOICE_ID);
   const [extraPrompt, setExtraPrompt] = useState("");
   const [tone, setTone] = useState(VERTICALS[0].suggestedTone);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customMode, setCustomMode] = useState<"file" | "url">("file");
+  const [customFile, setCustomFile] = useState<File | null>(null);
+  const [customUrl, setCustomUrl] = useState("");
+  const [customUploading, setCustomUploading] = useState(false);
+  const [customError, setCustomError] = useState<string | null>(null);
+
   const [previewing, setPreviewing] = useState(false);
   const [previewErr, setPreviewErr] = useState<string | null>(null);
   const [deployId, setDeployId] = useState<string | null>(null);
@@ -147,6 +157,40 @@ export default function Studio() {
       case "Preview": return true;
     }
   }, [step, vertical, avatarId, voiceId, fullPrompt]);
+
+  async function submitCustomAvatar() {
+    setCustomError(null);
+    const name = customName.trim();
+    if (!name) {
+      setCustomError("Give your avatar a name (3+ characters).");
+      return;
+    }
+    if (customMode === "file" && !customFile) {
+      setCustomError("Pick an image file (JPEG, PNG, or WebP — under 4.5MB).");
+      return;
+    }
+    if (customMode === "url" && !customUrl.trim()) {
+      setCustomError("Paste an image URL.");
+      return;
+    }
+    setCustomUploading(true);
+    try {
+      const created =
+        customMode === "file"
+          ? await createAvatarFromFile(name, customFile!)
+          : await createAvatarFromUrl(name, customUrl.trim());
+      setAvatars((prev) => [created, ...prev]);
+      setAvatarId(created.id);
+      setCustomOpen(false);
+      setCustomName("");
+      setCustomFile(null);
+      setCustomUrl("");
+    } catch (e: any) {
+      setCustomError(e.message ?? String(e));
+    } finally {
+      setCustomUploading(false);
+    }
+  }
 
   async function startLivePreview() {
     if (!videoRef.current) return;
@@ -308,7 +352,33 @@ export default function Studio() {
 
           {step === "Avatar" && (
             <div>
-              <SectionTitle>Choose an avatar</SectionTitle>
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <SectionTitle>Choose an avatar</SectionTitle>
+                <button
+                  onClick={() => setCustomOpen((v) => !v)}
+                  className="inline-flex items-center gap-2 rounded-full border border-border/60 px-4 py-2 text-[12px] uppercase tracking-[0.14em] text-foreground hover:border-foreground/60"
+                >
+                  {customOpen ? <X className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                  {customOpen ? "Cancel" : "Create your own"}
+                </button>
+              </div>
+
+              {customOpen && (
+                <CustomAvatarPanel
+                  name={customName}
+                  setName={setCustomName}
+                  mode={customMode}
+                  setMode={setCustomMode}
+                  file={customFile}
+                  setFile={setCustomFile}
+                  url={customUrl}
+                  setUrl={setCustomUrl}
+                  uploading={customUploading}
+                  error={customError}
+                  onSubmit={submitCustomAvatar}
+                />
+              )}
+
               {loadingCatalog ? (
                 <CatalogLoading />
               ) : avatars.length === 0 ? (
@@ -528,6 +598,128 @@ function CatalogLoading() {
   return (
     <div className="mt-8 flex items-center justify-center gap-2 text-[13px] text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" /> Loading from Anam...
+    </div>
+  );
+}
+
+function CustomAvatarPanel(props: {
+  name: string;
+  setName: (s: string) => void;
+  mode: "file" | "url";
+  setMode: (m: "file" | "url") => void;
+  file: File | null;
+  setFile: (f: File | null) => void;
+  url: string;
+  setUrl: (s: string) => void;
+  uploading: boolean;
+  error: string | null;
+  onSubmit: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const previewUrl = useMemo(
+    () => (props.file ? URL.createObjectURL(props.file) : null),
+    [props.file],
+  );
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  return (
+    <div className="mt-6 rounded-2xl border border-foreground/30 bg-foreground/[0.04] p-6">
+      <div className="flex flex-col gap-4 md:flex-row">
+        <div className="w-full md:w-48 shrink-0">
+          <div className="aspect-[3/4] w-full overflow-hidden rounded-lg border border-border/60 bg-background/40">
+            {props.mode === "file" && previewUrl ? (
+              <img src={previewUrl} alt="preview" className="h-full w-full object-cover" />
+            ) : props.mode === "url" && props.url ? (
+              <img src={props.url} alt="preview" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Preview
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex-1 space-y-4">
+          <div>
+            <label className="mb-1.5 block text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              Avatar name
+            </label>
+            <input
+              value={props.name}
+              onChange={(e) => props.setName(e.target.value)}
+              placeholder="e.g. Dr. Reyes"
+              className="w-full rounded-lg border border-border/60 bg-background/60 px-4 py-2.5 text-[14px] outline-none focus:border-foreground/60"
+            />
+          </div>
+
+          <div>
+            <div className="mb-2 inline-flex rounded-full border border-border/60 p-0.5 text-[11px] uppercase tracking-[0.14em]">
+              <button
+                onClick={() => props.setMode("file")}
+                className={`rounded-full px-3 py-1.5 ${props.mode === "file" ? "bg-foreground text-background" : "text-muted-foreground"}`}
+              >
+                Upload file
+              </button>
+              <button
+                onClick={() => props.setMode("url")}
+                className={`rounded-full px-3 py-1.5 ${props.mode === "url" ? "bg-foreground text-background" : "text-muted-foreground"}`}
+              >
+                Image URL
+              </button>
+            </div>
+
+            {props.mode === "file" ? (
+              <div>
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => props.setFile(e.target.files?.[0] ?? null)}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => inputRef.current?.click()}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border/60 px-4 py-6 text-[13px] text-muted-foreground hover:border-foreground/50 hover:text-foreground"
+                >
+                  <Upload className="h-4 w-4" />
+                  {props.file ? props.file.name : "Drop or pick an image (JPEG, PNG, WebP · max 4.5MB)"}
+                </button>
+              </div>
+            ) : (
+              <input
+                value={props.url}
+                onChange={(e) => props.setUrl(e.target.value)}
+                placeholder="https://example.com/photo.jpg"
+                className="w-full rounded-lg border border-border/60 bg-background/60 px-4 py-2.5 text-[14px] outline-none focus:border-foreground/60"
+              />
+            )}
+          </div>
+
+          {props.error && (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-[12px] text-destructive">
+              {props.error}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-3">
+            <p className="max-w-md text-[11.5px] text-muted-foreground">
+              Tip: use a clear, front-facing portrait against a clean background for the best result.
+            </p>
+            <button
+              onClick={props.onSubmit}
+              disabled={props.uploading}
+              className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-background disabled:opacity-50"
+            >
+              {props.uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {props.uploading ? "Creating..." : "Create avatar"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

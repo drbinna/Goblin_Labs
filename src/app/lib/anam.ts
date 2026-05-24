@@ -73,6 +73,47 @@ export async function listVoices(): Promise<Voice[]> {
   }));
 }
 
+export async function createAvatarFromFile(
+  displayName: string,
+  file: File,
+): Promise<Avatar> {
+  const form = new FormData();
+  form.append("displayName", displayName);
+  form.append("imageFile", file);
+  const res = await fetch("/api/avatars", { method: "POST", body: form });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`create avatar ${res.status}: ${text.slice(0, 300)}`);
+  const a = JSON.parse(text);
+  return {
+    id: a.id,
+    name: a.displayName ?? a.name ?? a.id,
+    variant: a.variantName,
+    imageUrl: a.imageUrl,
+    videoUrl: a.videoUrl,
+  };
+}
+
+export async function createAvatarFromUrl(
+  displayName: string,
+  imageUrl: string,
+): Promise<Avatar> {
+  const res = await fetch("/api/avatars", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ displayName, imageUrl }),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`create avatar ${res.status}: ${text.slice(0, 300)}`);
+  const a = JSON.parse(text);
+  return {
+    id: a.id,
+    name: a.displayName ?? a.name ?? a.id,
+    variant: a.variantName,
+    imageUrl: a.imageUrl,
+    videoUrl: a.videoUrl,
+  };
+}
+
 export async function listAvatars(): Promise<Avatar[]> {
   const res = await fetch("/api/avatars");
   if (!res.ok) throw new Error(`avatars failed: ${res.status}`);

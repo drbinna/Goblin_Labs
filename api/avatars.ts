@@ -11,15 +11,21 @@ export default async function handler(req: Request): Promise<Response> {
     });
   }
 
-  const init: RequestInit = {
-    method: req.method,
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${apiKey}`,
-    },
+  const contentType = req.headers.get("content-type") || "";
+  const headers: Record<string, string> = {
+    authorization: `Bearer ${apiKey}`,
   };
+  const init: RequestInit = { method: req.method, headers };
+
   if (req.method !== "GET" && req.method !== "DELETE") {
-    init.body = await req.text();
+    if (contentType.startsWith("multipart/form-data")) {
+      // Forward the multipart body byte-for-byte, preserving the boundary
+      init.body = await req.arrayBuffer();
+      headers["content-type"] = contentType;
+    } else {
+      init.body = await req.text();
+      headers["content-type"] = "application/json";
+    }
   }
 
   const upstream = await fetch(`${ANAM_BASE}/avatars`, init);
