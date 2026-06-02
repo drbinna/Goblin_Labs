@@ -4,7 +4,7 @@ import { ArrowRight, ArrowUpRight, Github, Twitter, Linkedin } from "lucide-reac
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import { EtherealShadow } from "@/app/components/ui/etheral-shadow";
 import goblinLogo from "@/imports/ChatGPT_Image_May_15__2026__02_03_01_AM.png";
-import founderPortrait from "@/imports/Screenshot_2026-05-15_at_2.44.17_AM.png";
+import founderPortrait from "@/imports/founder-portrait.jpg";
 
 const NAV = [
   { label: "Home", href: "#top" },
@@ -202,7 +202,7 @@ export default function App() {
                       muted
                       loop
                       playsInline
-                      preload="auto"
+                      preload="metadata"
                       controls={false}
                       disablePictureInPicture
                       onEnded={(e) => {
@@ -263,6 +263,7 @@ export default function App() {
                     title={v.title}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
+                    loading="lazy"
                     className="absolute inset-0 h-full w-full"
                   />
                 </div>
