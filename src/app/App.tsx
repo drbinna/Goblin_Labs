@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { ArrowRight, ArrowUpRight, Github, Twitter, Linkedin } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
-import { EtherealShadow } from "@/app/components/ui/etheral-shadow";
+import heroShadow from "@/imports/hero-shadow.webp";
 import goblinLogo from "@/imports/ChatGPT_Image_May_15__2026__02_03_01_AM.png";
 import founderPortrait from "@/imports/founder-portrait.jpg";
 
@@ -113,14 +113,10 @@ export default function App() {
 
       {/* Hero */}
       <section className="relative min-h-screen overflow-hidden">
-        <div className="absolute inset-0">
-          <EtherealShadow
-            color="rgba(160, 160, 160, 1)"
-            animation={{ scale: 100, speed: 90 }}
-            noise={{ opacity: 0.6, scale: 1.2 }}
-            sizing="fill"
-          />
-        </div>
+        <div
+          className="absolute inset-0 hero-shadow"
+          style={{ backgroundImage: `url(${heroShadow})` }}
+        />
         <div className="pointer-events-none absolute inset-0 bg-background/30" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-background to-transparent" />
 

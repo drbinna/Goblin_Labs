@@ -196,3 +196,21 @@
     background-size: auto, 64px 64px, 64px 64px;
   }
 }
+
+/* Pre-rendered hero atmosphere (replaces the live animated SVG filter).
+   A slow transform drift keeps it feeling alive at near-zero runtime cost. */
+.hero-shadow {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: scale(1.08);
+  will-change: transform;
+  animation: hero-drift 26s ease-in-out infinite alternate;
+}
+@keyframes hero-drift {
+  from { transform: scale(1.08) translate3d(0, 0, 0); }
+  to   { transform: scale(1.22) translate3d(-2.5%, 1.5%, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-shadow { animation: none; transform: scale(1.08); }
+}
