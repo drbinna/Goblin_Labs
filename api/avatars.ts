@@ -30,8 +30,18 @@ export default async function handler(req: Request): Promise<Response> {
 
   const upstream = await fetch(`${ANAM_BASE}/avatars`, init);
   const text = await upstream.text();
+
+  // Only cache idempotent reads. Writes/deletes must always go upstream.
+  const isRead = req.method === "GET";
+  const cacheControl = isRead
+    ? "public, max-age=0, s-maxage=120, stale-while-revalidate=600"
+    : "no-store";
+
   return new Response(text, {
     status: upstream.status,
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      "cache-control": cacheControl,
+    },
   });
 }

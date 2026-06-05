@@ -380,7 +380,7 @@ export default function Studio() {
               )}
 
               {loadingCatalog ? (
-                <CatalogLoading />
+                <AvatarSkeletonGrid />
               ) : avatars.length === 0 ? (
                 <CatalogEmpty kind="avatars" />
               ) : (
@@ -402,7 +402,7 @@ export default function Studio() {
             <div>
               <SectionTitle>Choose a voice</SectionTitle>
               {loadingCatalog ? (
-                <CatalogLoading />
+                <VoiceSkeletonGrid />
               ) : voices.length === 0 ? (
                 <CatalogEmpty kind="voices" />
               ) : (
@@ -598,6 +598,48 @@ function CatalogLoading() {
   return (
     <div className="mt-8 flex items-center justify-center gap-2 text-[13px] text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" /> Loading from Anam...
+    </div>
+  );
+}
+
+/**
+ * Shimmer skeletons that match the final avatar card grid so the layout
+ * doesn't jump when data arrives. Perceived speed > actual speed.
+ */
+function AvatarSkeletonGrid() {
+  return (
+    <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div
+          key={i}
+          className="liquid-glass relative aspect-[4/5] overflow-hidden rounded-2xl"
+        >
+          <div className="absolute inset-0 animate-pulse bg-foreground/[0.04]" />
+          <div className="absolute inset-x-3 bottom-3">
+            <div className="h-3 w-1/2 animate-pulse rounded-full bg-foreground/10" />
+            <div className="mt-2 h-2 w-1/3 animate-pulse rounded-full bg-foreground/[0.06]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function VoiceSkeletonGrid() {
+  return (
+    <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div
+          key={i}
+          className="liquid-glass flex items-center gap-4 rounded-2xl p-4"
+        >
+          <div className="h-12 w-12 shrink-0 animate-pulse rounded-full bg-foreground/[0.06]" />
+          <div className="flex-1 space-y-2">
+            <div className="h-3 w-1/3 animate-pulse rounded-full bg-foreground/10" />
+            <div className="h-2 w-2/3 animate-pulse rounded-full bg-foreground/[0.06]" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

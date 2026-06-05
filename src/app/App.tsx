@@ -12,6 +12,19 @@ const NAV = [
   { label: "Studio", href: "/studio" },
 ];
 
+// Eagerly start the dynamic Studio chunk so it's in cache the moment the
+// user hovers/focuses the Studio link. By the time they actually click,
+// the JS has already streamed in.
+let studioPrefetched = false;
+function prefetchStudio() {
+  if (studioPrefetched) return;
+  studioPrefetched = true;
+  import("@/app/routes/Studio.tsx").catch(() => {
+    // Reset so a real navigation will retry.
+    studioPrefetched = false;
+  });
+}
+
 const VERTICALS = [
   {
     code: "01",
@@ -94,14 +107,23 @@ export default function App() {
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-3 sm:px-6 sm:py-4 md:px-12">
           <Logo />
           <nav className="hidden items-center gap-3 text-[13px] text-muted-foreground md:flex">
-            {NAV.map((n, i) => (
-              <span key={n.label} className="flex items-center gap-3">
-                <a href={n.href} className="transition-colors hover:text-foreground">
-                  {n.label}
-                </a>
-                {i < NAV.length - 1 && <span className="text-foreground/30">•</span>}
-              </span>
-            ))}
+            {NAV.map((n, i) => {
+              const isStudio = n.href === "/studio";
+              return (
+                <span key={n.label} className="flex items-center gap-3">
+                  <a
+                    href={n.href}
+                    className="transition-colors hover:text-foreground"
+                    onMouseEnter={isStudio ? prefetchStudio : undefined}
+                    onFocus={isStudio ? prefetchStudio : undefined}
+                    onTouchStart={isStudio ? prefetchStudio : undefined}
+                  >
+                    {n.label}
+                  </a>
+                  {i < NAV.length - 1 && <span className="text-foreground/30">•</span>}
+                </span>
+              );
+            })}
           </nav>
           <div className="flex items-center gap-2">
             <GlassIcon label="Twitter"><Twitter className="h-4 w-4" /></GlassIcon>
