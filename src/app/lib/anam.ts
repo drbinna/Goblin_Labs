@@ -6,11 +6,15 @@ export type PersonaConfig = {
   voiceId: string;
   systemPrompt: string;
   llmId: string;
+  avatarModel?: string;
 };
 
 export const DEFAULT_LLM_ID = "a7cf662c-2ace-4de1-a21e-ef0fbf144bb7";
 export const DEFAULT_AVATAR_ID = "30fa96d0-26c4-4e55-94a0-517025942e18";
 export const DEFAULT_VOICE_ID = "6bfbe25a-979d-40f3-a92b-5394170af54b";
+// Pin the stable flagship model. Unpinned sessions fall back to a default that
+// can be a slower-to-initialize / early-access model. cara-3 is GA + low-latency.
+export const DEFAULT_AVATAR_MODEL = "cara-3";
 
 export async function fetchSessionToken(input: {
   personaId?: string;
@@ -201,6 +205,7 @@ export async function getPersona(id: string): Promise<DeployedPersona | null> {
       avatarId: p.avatar?.id ?? DEFAULT_AVATAR_ID,
       voiceId: p.voice?.id ?? DEFAULT_VOICE_ID,
       llmId: p.llmId ?? DEFAULT_LLM_ID,
+      avatarModel: p.avatarModel ?? p.avatar?.model ?? DEFAULT_AVATAR_MODEL,
       systemPrompt: p.brain?.systemPrompt ?? "You are a helpful, embodied AI persona.",
     },
   };
