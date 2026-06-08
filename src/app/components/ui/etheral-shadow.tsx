@@ -1,4 +1,4 @@
-import React, { useRef, useId, useEffect, CSSProperties } from "react";
+import React, { useRef, useId, useEffect, useState, CSSProperties } from "react";
 import { animate, useMotionValue, type AnimationPlaybackControls } from "motion/react";
 
 interface AnimationConfig {
@@ -19,6 +19,8 @@ interface ShadowOverlayProps {
   style?: CSSProperties;
   className?: string;
   children?: React.ReactNode;
+  /** Freeze the animation (keeps the rendered look, stops per-frame recompute). */
+  paused?: boolean;
 }
 
 function mapRange(
@@ -46,6 +48,7 @@ export function EtherealShadow({
   style,
   className,
   children,
+  paused = false,
 }: ShadowOverlayProps) {
   const id = useInstanceId();
   const animationEnabled = !!(animation && animation.scale > 0);
@@ -53,11 +56,31 @@ export function EtherealShadow({
   const hueRotateMotionValue = useMotionValue(180);
   const hueRotateAnimation = useRef<AnimationPlaybackControls | null>(null);
 
+  // Animation is suspended when the caller pauses it, when the user prefers
+  // reduced motion, or when the tab is backgrounded — in every case we simply
+  // stop rewriting the filter value, so the last frame stays rendered (no snap)
+  // and the browser stops recomputing the expensive turbulence/displacement chain.
+  const [environmentAllowsMotion, setEnvironmentAllowsMotion] = useState(true);
+  useEffect(() => {
+    const rm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () =>
+      setEnvironmentAllowsMotion(!rm.matches && document.visibilityState === "visible");
+    update();
+    rm.addEventListener("change", update);
+    document.addEventListener("visibilitychange", update);
+    return () => {
+      rm.removeEventListener("change", update);
+      document.removeEventListener("visibilitychange", update);
+    };
+  }, []);
+
+  const active = animationEnabled && !paused && environmentAllowsMotion;
+
   const displacementScale = animation ? mapRange(animation.scale, 1, 100, 20, 100) : 0;
   const animationDuration = animation ? mapRange(animation.speed, 1, 100, 1000, 50) : 1;
 
   useEffect(() => {
-    if (feColorMatrixRef.current && animationEnabled) {
+    if (feColorMatrixRef.current && active) {
       if (hueRotateAnimation.current) hueRotateAnimation.current.stop();
       hueRotateMotionValue.set(0);
       hueRotateAnimation.current = animate(hueRotateMotionValue, 360, {
@@ -77,7 +100,7 @@ export function EtherealShadow({
         if (hueRotateAnimation.current) hueRotateAnimation.current.stop();
       };
     }
-  }, [animationEnabled, animationDuration, hueRotateMotionValue]);
+  }, [active, animationDuration, hueRotateMotionValue]);
 
   return (
     <div

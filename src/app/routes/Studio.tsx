@@ -275,6 +275,7 @@ export default function Studio() {
           animation={{ scale: 60, speed: 50 }}
           noise={{ opacity: 0.4, scale: 1.2 }}
           sizing="fill"
+          paused={previewing}
         />
         <div className="absolute inset-0 bg-background/70" />
       </div>
