@@ -30,13 +30,16 @@ export async function fetchSessionToken(input: {
 }
 
 export async function createPersona(config: PersonaConfig): Promise<{ id: string }> {
+  const t0 = performance.now();
   const res = await fetch("/api/personas", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(config),
   });
   if (!res.ok) throw new Error(`create persona failed: ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  console.info("[anam] createPersona (ms):", Math.round(performance.now() - t0));
+  return data;
 }
 
 export type Voice = {
@@ -157,13 +160,26 @@ async function streamToken(videoEl: HTMLVideoElement, token: string): Promise<Se
   };
 }
 
+export type SessionTimings = { tokenMs: number; firstFrameMs: number; totalMs: number };
+
 // Studio: stream an ad-hoc persona built from the current builder config.
+// Returns timing breakdown so we can see exactly where the wait is spent.
 export async function startPreview(
   videoEl: HTMLVideoElement,
   config: PersonaConfig,
-): Promise<SessionHandle> {
+): Promise<SessionHandle & { timings: SessionTimings }> {
+  const t0 = performance.now();
   const token = await fetchSessionToken({ personaConfig: config });
-  return streamToken(videoEl, token);
+  const t1 = performance.now();
+  const handle = await streamToken(videoEl, token);
+  const t2 = performance.now();
+  const timings: SessionTimings = {
+    tokenMs: Math.round(t1 - t0),
+    firstFrameMs: Math.round(t2 - t1),
+    totalMs: Math.round(t2 - t0),
+  };
+  console.info("[anam] preview timings (ms):", timings);
+  return { ...handle, timings };
 }
 
 // Public talk page: a deployed persona, resolved to a full config we can mint a

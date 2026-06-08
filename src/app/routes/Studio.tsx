@@ -16,6 +16,7 @@ import {
   type Avatar,
   type Voice,
   type PersonaConfig,
+  type SessionTimings,
 } from "@/app/lib/anam";
 
 type Vertical = {
@@ -94,6 +95,7 @@ export default function Studio() {
 
   const [previewing, setPreviewing] = useState(false);
   const [previewLive, setPreviewLive] = useState(false);
+  const [previewTimings, setPreviewTimings] = useState<SessionTimings | null>(null);
   const [previewErr, setPreviewErr] = useState<string | null>(null);
   const [deployId, setDeployId] = useState<string | null>(null);
   const [deploying, setDeploying] = useState(false);
@@ -226,6 +228,7 @@ export default function Studio() {
       previewHandleRef.current?.stop().catch(() => {});
       const handle = await startPreview(videoRef.current, config);
       previewHandleRef.current = handle;
+      setPreviewTimings(handle.timings);
       setPreviewLive(true);
       // Config is proven good — pre-warm the deploy so the Deploy click is instant.
       void ensurePersona(config).catch(() => {});
@@ -538,6 +541,11 @@ export default function Studio() {
                       </div>
                     )}
                   </div>
+                  {previewTimings && (
+                    <div className="border-t border-white/10 px-3 py-2 text-center text-[11px] text-white/55">
+                      token {previewTimings.tokenMs}ms · first frame {previewTimings.firstFrameMs}ms · total {previewTimings.totalMs}ms
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-4">
