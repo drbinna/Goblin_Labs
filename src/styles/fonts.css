@@ -1,3 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&display=swap");
-@import url("https://api.fontshare.com/v2/css?f[]=sharpie@400&display=swap");
+/* Web fonts are loaded via <link> tags in index.html so the browser discovers
+   them during initial HTML parse instead of after this CSS file downloads.
+   Keeping this file (imported by index.css) intentionally empty avoids the
+   render-blocking, serially-chained @import waterfall that lived here before. */

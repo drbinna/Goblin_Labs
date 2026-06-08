@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { ArrowRight, ArrowUpRight, Github, Twitter, Linkedin } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
@@ -56,23 +56,6 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.7, delay, ease: [0.2, 0.7, 0.2, 1] as const },
 });
 
-function Tick() {
-  const [t, setT] = useState("");
-  useEffect(() => {
-    const update = () => {
-      const d = new Date();
-      const pad = (n: number) => n.toString().padStart(2, "0");
-      setT(
-        `${d.getUTCFullYear()}.${pad(d.getUTCMonth() + 1)}.${pad(d.getUTCDate())} · ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`,
-      );
-    };
-    update();
-    const i = setInterval(update, 1000);
-    return () => clearInterval(i);
-  }, []);
-  return <span className="tabular-nums">{t}</span>;
-}
-
 function GlassIcon({ children, label }: { children: ReactNode; label: string }) {
   return (
     <a
@@ -82,6 +65,52 @@ function GlassIcon({ children, label }: { children: ReactNode; label: string }) 
     >
       {children}
     </a>
+  );
+}
+
+// Defers a video until it nears the viewport: no src is attached (so no network
+// fetch or decode) until the card scrolls close, and playback pauses when it
+// leaves the screen. Keeps three autoplaying clips off the critical path.
+function InViewVideo({ src, className }: { src: string; className?: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setActive(true);
+          void el.play().catch(() => {});
+        } else {
+          el.pause();
+        }
+      },
+      { rootMargin: "300px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <video
+      ref={ref}
+      src={active ? src : undefined}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="none"
+      controls={false}
+      disablePictureInPicture
+      onEnded={(e) => {
+        const el = e.currentTarget;
+        el.currentTime = 0;
+        void el.play();
+      }}
+      className={className}
+    />
   );
 }
 
@@ -213,21 +242,9 @@ export default function App() {
                 </div>
                 <div className="mt-4 aspect-[4/5] w-full overflow-hidden rounded-xl bg-foreground/[0.03]">
                   {v.video ? (
-                    <video
+                    <InViewVideo
                       key={v.video}
                       src={v.video}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      preload="metadata"
-                      controls={false}
-                      disablePictureInPicture
-                      onEnded={(e) => {
-                        const el = e.currentTarget;
-                        el.currentTime = 0;
-                        void el.play();
-                      }}
                       className="h-full w-full object-cover"
                     />
                   ) : (

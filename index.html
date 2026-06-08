@@ -7,6 +7,30 @@
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
       <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+      <!-- Fonts: discovered during initial HTML parse and loaded non-render-blocking
+           (media=print flips to all on load). display=swap avoids invisible text. -->
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital,wght@0,400;1,400&display=swap"
+        media="print"
+        onload="this.media='all'"
+      />
+      <link
+        rel="stylesheet"
+        href="https://api.fontshare.com/v2/css?f[]=sharpie@400&display=swap"
+        media="print"
+        onload="this.media='all'"
+      />
+      <noscript>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif:ital,wght@0,400;1,400&display=swap"
+        />
+        <link
+          rel="stylesheet"
+          href="https://api.fontshare.com/v2/css?f[]=sharpie@400&display=swap"
+        />
+      </noscript>
       <!-- Anam SDK + media reach for these on session start; shave ~100–300ms off first frame. -->
       <link rel="preconnect" href="https://api.anam.ai" crossorigin />
       <link rel="dns-prefetch" href="https://api.anam.ai" />

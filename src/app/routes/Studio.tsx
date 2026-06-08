@@ -96,6 +96,7 @@ export default function Studio() {
   const [previewErr, setPreviewErr] = useState<string | null>(null);
   const [deployId, setDeployId] = useState<string | null>(null);
   const [deploying, setDeploying] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
   const [catalogErr, setCatalogErr] = useState<string | null>(null);
 
@@ -216,6 +217,20 @@ export default function Studio() {
       setPreviewErr(e.message ?? String(e));
     } finally {
       setDeploying(false);
+    }
+  }
+
+  const shareUrl = deployId
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/p/${deployId}`
+    : "";
+
+  async function copyShareUrl() {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked — the field is selectable as a fallback */
     }
   }
 
@@ -500,11 +515,34 @@ export default function Studio() {
                   {deployId ? (
                     <div className="rounded-xl border border-foreground/40 bg-foreground/5 p-4">
                       <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                        Deployed
+                        Deployed · live
                       </div>
-                      <div className="mt-1 break-all text-[13px]">Persona ID: {deployId}</div>
-                      <div className="mt-3 text-[12px] text-muted-foreground">
-                        Shareable page coming in Phase 2 — use this ID with the Anam SDK to embed today.
+                      <div className="mt-3 flex items-center gap-2">
+                        <input
+                          readOnly
+                          value={shareUrl}
+                          onFocus={(e) => e.currentTarget.select()}
+                          className="min-w-0 flex-1 truncate rounded-lg border border-border/60 bg-background px-3 py-2 text-[13px]"
+                        />
+                        <button
+                          onClick={copyShareUrl}
+                          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-foreground px-3 py-2 text-[12px] font-semibold text-background"
+                        >
+                          {copied ? <Check className="h-4 w-4" /> : null}
+                          {copied ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+                      <a
+                        href={shareUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-flex items-center gap-1.5 text-[12px] uppercase tracking-[0.16em] text-foreground"
+                      >
+                        Open talk page
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </a>
+                      <div className="mt-3 break-all text-[11px] text-muted-foreground">
+                        Persona ID: {deployId}
                       </div>
                     </div>
                   ) : (

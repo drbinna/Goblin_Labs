@@ -128,14 +128,17 @@ export async function listAvatars(): Promise<Avatar[]> {
   }));
 }
 
-export async function startPreview(
-  videoEl: HTMLVideoElement,
-  config: PersonaConfig,
-): Promise<{ stop: () => Promise<void>; talk: (s: string) => Promise<void> }> {
-  const token = await fetchSessionToken({ personaConfig: config });
+export type SessionHandle = {
+  stop: () => Promise<void>;
+  talk: (s: string) => Promise<void>;
+};
+
+// Shared streaming logic. Given a session token, attaches the Anam client to a
+// <video> element and resolves once the first frame plays.
+async function streamToken(videoEl: HTMLVideoElement, token: string): Promise<SessionHandle> {
   const client = createClient(token);
 
-  if (!videoEl.id) videoEl.id = `anam-preview-${Math.random().toString(36).slice(2)}`;
+  if (!videoEl.id) videoEl.id = `anam-stage-${Math.random().toString(36).slice(2)}`;
 
   const ready = new Promise<void>((resolve) => {
     client.addListener(AnamEvent.VIDEO_PLAY_STARTED, () => resolve());
@@ -152,4 +155,31 @@ export async function startPreview(
       await client.talk(s);
     },
   };
+}
+
+// Studio: stream an ad-hoc persona built from the current builder config.
+export async function startPreview(
+  videoEl: HTMLVideoElement,
+  config: PersonaConfig,
+): Promise<SessionHandle> {
+  const token = await fetchSessionToken({ personaConfig: config });
+  return streamToken(videoEl, token);
+}
+
+// Public talk page: stream a previously-deployed persona by its Anam id.
+export async function startPersonaSession(
+  videoEl: HTMLVideoElement,
+  personaId: string,
+): Promise<SessionHandle> {
+  const token = await fetchSessionToken({ personaId });
+  return streamToken(videoEl, token);
+}
+
+// Fetch a deployed persona's metadata (name, etc.) for display.
+export async function getPersona(id: string): Promise<{ id: string; name: string } | null> {
+  const res = await fetch(`/api/personas?id=${encodeURIComponent(id)}`);
+  if (!res.ok) return null;
+  const p = await res.json().catch(() => null);
+  if (!p) return null;
+  return { id: p.id ?? id, name: p.name ?? p.displayName ?? "Persona" };
 }

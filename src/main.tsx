@@ -6,6 +6,8 @@ import "./styles/index.css";
 
 // Studio is a heavy route (avatar studio); load it only when visited.
 const Studio = lazy(() => import("./app/routes/Studio.tsx"));
+// Public persona talk page — also lazy, since it pulls in the Anam SDK.
+const Talk = lazy(() => import("./app/routes/Talk.tsx"));
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
@@ -16,6 +18,14 @@ createRoot(document.getElementById("root")!).render(
         element={
           <Suspense fallback={null}>
             <Studio />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/p/:id"
+        element={
+          <Suspense fallback={null}>
+            <Talk />
           </Suspense>
         }
       />
