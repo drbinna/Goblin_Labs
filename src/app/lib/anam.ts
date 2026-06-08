@@ -166,20 +166,26 @@ export async function startPreview(
   return streamToken(videoEl, token);
 }
 
-// Public talk page: stream a previously-deployed persona by its Anam id.
-export async function startPersonaSession(
-  videoEl: HTMLVideoElement,
-  personaId: string,
-): Promise<SessionHandle> {
-  const token = await fetchSessionToken({ personaId });
-  return streamToken(videoEl, token);
-}
+// Public talk page: a deployed persona, resolved to a full config we can mint a
+// session token with. Anam removed the legacy "session token by personaId" path,
+// so we fetch the stored persona and rebuild its personaConfig.
+export type DeployedPersona = { id: string; name: string; config: PersonaConfig };
 
-// Fetch a deployed persona's metadata (name, etc.) for display.
-export async function getPersona(id: string): Promise<{ id: string; name: string } | null> {
+export async function getPersona(id: string): Promise<DeployedPersona | null> {
   const res = await fetch(`/api/personas?id=${encodeURIComponent(id)}`);
   if (!res.ok) return null;
   const p = await res.json().catch(() => null);
-  if (!p) return null;
-  return { id: p.id ?? id, name: p.name ?? p.displayName ?? "Persona" };
+  if (!p || !p.id) return null;
+  return {
+    id: p.id,
+    name: p.name ?? "Persona",
+    config: {
+      name: p.name ?? "Persona",
+      // GET /personas/:id returns avatar/voice as objects and the prompt under `brain`.
+      avatarId: p.avatar?.id ?? DEFAULT_AVATAR_ID,
+      voiceId: p.voice?.id ?? DEFAULT_VOICE_ID,
+      llmId: p.llmId ?? DEFAULT_LLM_ID,
+      systemPrompt: p.brain?.systemPrompt ?? "You are a helpful, embodied AI persona.",
+    },
+  };
 }

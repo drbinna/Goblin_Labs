@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
 import { Loader2, Mic, PhoneOff, Sparkles } from "lucide-react";
 import {
-  startPersonaSession,
+  startPreview,
   getPersona,
   type SessionHandle,
+  type DeployedPersona,
 } from "@/app/lib/anam";
 
 type Phase = "idle" | "connecting" | "live" | "ended" | "error";
@@ -13,18 +14,20 @@ export default function Talk() {
   const { id } = useParams<{ id: string }>();
   const [phase, setPhase] = useState<Phase>("idle");
   const [err, setErr] = useState<string | null>(null);
-  const [name, setName] = useState<string>("Persona");
+  const [persona, setPersona] = useState<DeployedPersona | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const handleRef = useRef<SessionHandle | null>(null);
 
-  // Pull the persona's display name for the header (best-effort).
+  const name = persona?.name ?? "Persona";
+
+  // Resolve the persona (name + config) up front so "Start" is instant.
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
     getPersona(id)
       .then((p) => {
-        if (!cancelled && p) setName(p.name);
+        if (!cancelled && p) setPersona(p);
       })
       .catch(() => {});
     return () => {
@@ -44,7 +47,14 @@ export default function Talk() {
     setErr(null);
     setPhase("connecting");
     try {
-      handleRef.current = await startPersonaSession(videoRef.current, id);
+      // Ensure we have the persona's config (in case the mount fetch is still in flight).
+      let p = persona;
+      if (!p) {
+        p = await getPersona(id);
+        if (p) setPersona(p);
+      }
+      if (!p) throw new Error("This persona could not be found.");
+      handleRef.current = await startPreview(videoRef.current, p.config);
       setPhase("live");
     } catch (e: any) {
       setErr(e?.message ?? String(e));
