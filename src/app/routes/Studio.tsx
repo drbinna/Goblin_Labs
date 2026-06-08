@@ -93,6 +93,7 @@ export default function Studio() {
   const [customError, setCustomError] = useState<string | null>(null);
 
   const [previewing, setPreviewing] = useState(false);
+  const [previewLive, setPreviewLive] = useState(false);
   const [previewErr, setPreviewErr] = useState<string | null>(null);
   const [deployId, setDeployId] = useState<string | null>(null);
   const [deploying, setDeploying] = useState(false);
@@ -102,6 +103,10 @@ export default function Studio() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewHandleRef = useRef<{ stop: () => Promise<void>; talk: (s: string) => Promise<void> } | null>(null);
+  // Caches an in-flight / completed createPersona by config signature, so a
+  // successful preview can pre-warm the deploy and the explicit Deploy click
+  // reuses it instead of paying the round-trip again.
+  const personaCacheRef = useRef<{ sig: string; promise: Promise<{ id: string }> } | null>(null);
 
   // Load avatar + voice catalogs on mount
   useEffect(() => {
@@ -149,6 +154,11 @@ export default function Studio() {
     [name, vertical, avatarId, voiceId, fullPrompt],
   );
 
+  const selectedAvatar = useMemo(
+    () => avatars.find((a) => a.id === avatarId),
+    [avatars, avatarId],
+  );
+
   const canAdvance = useMemo(() => {
     switch (step) {
       case "Vertical": return !!vertical;
@@ -193,25 +203,45 @@ export default function Studio() {
     }
   }
 
+  // Create the persona at most once per unique config; reuse the in-flight or
+  // completed promise. Lets preview pre-warm the deploy without duplicating.
+  function ensurePersona(cfg: PersonaConfig): Promise<{ id: string }> {
+    const sig = JSON.stringify(cfg);
+    if (personaCacheRef.current?.sig === sig) return personaCacheRef.current.promise;
+    const promise = createPersona(cfg);
+    personaCacheRef.current = { sig, promise };
+    // On failure, drop the cache so a later explicit deploy can retry cleanly.
+    promise.catch(() => {
+      if (personaCacheRef.current?.sig === sig) personaCacheRef.current = null;
+    });
+    return promise;
+  }
+
   async function startLivePreview() {
     if (!videoRef.current) return;
     setPreviewErr(null);
     setPreviewing(true);
+    setPreviewLive(false);
     try {
       previewHandleRef.current?.stop().catch(() => {});
       const handle = await startPreview(videoRef.current, config);
       previewHandleRef.current = handle;
+      setPreviewLive(true);
+      // Config is proven good — pre-warm the deploy so the Deploy click is instant.
+      void ensurePersona(config).catch(() => {});
       await handle.talk(`Hi, I'm your ${vertical.title.toLowerCase()} persona. What would you like to work on?`);
     } catch (e: any) {
       setPreviewErr(e.message ?? String(e));
       setPreviewing(false);
+      setPreviewLive(false);
     }
   }
 
   async function deploy() {
     setDeploying(true);
     try {
-      const { id } = await createPersona(config);
+      // Usually already resolved from the preview pre-warm; otherwise creates now.
+      const { id } = await ensurePersona(config);
       setDeployId(id);
     } catch (e: any) {
       setPreviewErr(e.message ?? String(e));
@@ -481,8 +511,17 @@ export default function Studio() {
                       autoPlay
                       playsInline
                       muted={false}
+                      poster={selectedAvatar?.imageUrl}
                       className="absolute inset-0 h-full w-full object-cover"
                     />
+                    {previewing && !previewLive && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/40 text-center backdrop-blur-[1px]">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                        <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                          Connecting…
+                        </div>
+                      </div>
+                    )}
                     {!previewing && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/60 text-center">
                         <Sparkles className="h-6 w-6" />
