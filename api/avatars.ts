@@ -31,10 +31,13 @@ export default async function handler(req: Request): Promise<Response> {
   const upstream = await fetch(`${ANAM_BASE}/avatars`, init);
   const text = await upstream.text();
 
-  // Only cache idempotent reads. Writes/deletes must always go upstream.
-  const isRead = req.method === "GET";
+  // The catalog (≈10 avatars) is near-static, but the upstream Anam call is slow
+  // (~3s). Serve fresh for 10 min, then serve the cached copy instantly for up to
+  // a day while revalidating in the background — so users almost never wait on it.
+  // New custom avatars still show immediately because the uploading client adds
+  // them locally; the shared cache catches up within the window.
   const cacheControl = isRead
-    ? "public, max-age=0, s-maxage=120, stale-while-revalidate=600"
+    ? "public, max-age=0, s-maxage=600, stale-while-revalidate=86400"
     : "no-store";
 
   return new Response(text, {

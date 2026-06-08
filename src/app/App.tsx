@@ -19,10 +19,13 @@ let studioPrefetched = false;
 function prefetchStudio() {
   if (studioPrefetched) return;
   studioPrefetched = true;
+  // Warm the heavy route chunk AND the Anam catalog (the avatars call alone is
+  // ~3s) so both are cached by the time the Studio actually mounts.
   import("@/app/routes/Studio.tsx").catch(() => {
-    // Reset so a real navigation will retry.
     studioPrefetched = false;
   });
+  fetch("/api/avatars").catch(() => {});
+  fetch("/api/voices").catch(() => {});
 }
 
 const VERTICALS = [

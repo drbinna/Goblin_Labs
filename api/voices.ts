@@ -26,9 +26,8 @@ export default async function handler(req: Request): Promise<Response> {
     status: upstream.status,
     headers: {
       "content-type": "application/json",
-      // Edge CDN: serve cached for 5 min, allow stale for 30 min while revalidating.
-      // Browsers: trust the edge, don't cache locally (so admins see changes promptly).
-      "cache-control": "public, max-age=0, s-maxage=300, stale-while-revalidate=1800",
+      // Voice catalog is static; serve instantly and revalidate in the background.
+      "cache-control": "public, max-age=0, s-maxage=600, stale-while-revalidate=86400",
     },
   });
 }
