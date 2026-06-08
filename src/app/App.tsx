@@ -172,6 +172,22 @@ export default function App() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-background to-transparent" />
 
         <div className="relative z-10 mx-auto flex min-h-screen max-w-[1100px] flex-col items-center justify-center px-6 pb-12 pt-28 text-center sm:pt-36 md:px-10 md:pt-56">
+          <motion.div {...fadeUp(0)} className="mb-8">
+            <a
+              href="https://www.producthunt.com/products/goblin-labs-ai-personas?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-goblin-labs-ai-personas"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block"
+            >
+              <img
+                alt="Goblin Labs — AI personas - Frontier lab for building and deploying AI personas | Product Hunt"
+                width={250}
+                height={54}
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1166179&theme=light&t=1780903902092"
+              />
+            </a>
+          </motion.div>
+
           <motion.h1
             {...fadeUp(0.1)}
             className="text-balance text-[clamp(2.25rem,7vw,6rem)] font-medium leading-[1.05] tracking-[-0.03em]"
