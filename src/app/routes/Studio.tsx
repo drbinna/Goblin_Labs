@@ -275,12 +275,15 @@ export default function Studio() {
     <div className="min-h-screen w-full bg-background text-foreground">
       {/* Ambient background */}
       <div className="pointer-events-none fixed inset-0 -z-10">
+        {/* Static ambient background. The animated turbulence/displacement SVG
+            filter repainted the full viewport every frame and made scrolling
+            janky (the landing page has no such filter, hence it stayed smooth).
+            Dropping `animation` removes the filter entirely — just a masked soft
+            shadow + grain, no per-frame cost. */}
         <EtherealShadow
           color="rgba(160, 160, 160, 1)"
-          animation={{ scale: 60, speed: 50 }}
           noise={{ opacity: 0.4, scale: 1.2 }}
           sizing="fill"
-          paused={previewing}
         />
         <div className="absolute inset-0 bg-background/70" />
       </div>
