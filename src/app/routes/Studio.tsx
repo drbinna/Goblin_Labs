@@ -540,9 +540,6 @@ export default function Studio() {
                         >
                           Start live preview
                         </button>
-                        <div className="max-w-xs text-[11px] text-muted-foreground">
-                          Streams a live Anam session using your current config.
-                        </div>
                       </div>
                     )}
                   </div>
