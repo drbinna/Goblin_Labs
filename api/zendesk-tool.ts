@@ -67,12 +67,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (action === "list_tickets") {
+      // Real-time /tickets.json (search index lags writes by up to a minute,
+      // which would show stale counts right after status changes).
       const status = String(args.status ?? "").trim().toLowerCase();
       const valid = ["new", "open", "pending", "hold", "solved", "closed"];
-      const q = valid.includes(status) ? `type:ticket status:${status}` : "type:ticket";
-      const out = await zdFetch(`/search.json?query=${encodeURIComponent(q)}&sort_by=updated_at&sort_order=desc&per_page=10`);
-      const tickets = (out.results ?? []).map(slim);
-      return res.status(200).json({ ok: true, total_count: out.count ?? tickets.length, status: status || "all", tickets });
+      const out = await zdFetch("/tickets.json?per_page=100&sort_by=updated_at&sort_order=desc");
+      let tickets = (out.tickets ?? []).map(slim);
+      if (valid.includes(status)) tickets = tickets.filter((t: any) => t.status === status);
+      return res.status(200).json({
+        ok: true,
+        total_count: tickets.length,
+        status: status || "all",
+        tickets: tickets.slice(0, 10),
+      });
     }
 
     if (action === "update_status") {
