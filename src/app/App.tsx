@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
-import avaPortrait from "@/assets/personas/ava.webp";
-import samPortrait from "@/assets/personas/sam.webp";
-import zekhtarPortrait from "@/assets/personas/zekhtar.webp";
 import { ArrowRight, ArrowUpRight, Github, Twitter, Linkedin } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import heroShadow from "@/imports/hero-shadow.webp";
@@ -64,40 +61,40 @@ const fadeUp = (delay = 0) => ({
 
 const DEPLOYED_PERSONAS = [
   {
-    name: "Ava",
-    role: "Lead gen",
-    voice: "warm, outbound",
-    portrait: avaPortrait,
+    name: "Anne",
+    role: "Care navigator",
+    voice: "gentle, reassuring",
+    portrait: "https://lab.anam.ai/persona_thumbnails/anne_home.png",
     body:
-      "Qualifies inbound leads the moment they arrive — fit, intent, next step. She listens in real time, recognizes returning callers across sessions, and lands every lead in the CRM without a rep round-tripping.",
-    stack: ["Anam", "LiveKit", "Moss", "Supabase", "GPT-4o"],
-    href: "https://main.d24wdxotw4ntqn.amplifyapp.com/",
-    cta: "Talk to Ava live",
+      "Helps people make sense of appointments, care plans, and wellness questions in plain language — calm, empathetic, and careful never to play doctor. Built for the healthcare vertical.",
+    stack: ["Healthcare", "Real-time avatar", "Empathetic voice"],
+    href: "/p/6b4df3c2-c9ce-49e7-a95b-8816e8216586",
+    cta: "Talk to Anne",
     note: null,
   },
   {
-    name: "Sam",
-    role: "Support",
-    voice: "calm, grounded",
-    portrait: samPortrait,
+    name: "Gabriel",
+    role: "Tutor",
+    voice: "patient, encouraging",
+    portrait: "https://lab.anam.ai/persona_thumbnails/gabriel_table.png",
     body:
-      "Reads live Zendesk tickets, pulls answers out of runbook PDFs, and grounds every reply in retrieved source documents. Drops internal notes or escalates to a specialist — no context lost between calls.",
-    stack: ["Anam", "LiveKit", "Moss", "Zendesk", "Unsiloed", "GPT-4o"],
-    href: "https://main.d24wdxotw4ntqn.amplifyapp.com/",
-    cta: "Talk to Sam live",
+      "Teaches by asking the next right question instead of handing over answers — math, writing, science, study habits. Adapts to the learner's pace and notices when something finally clicks.",
+    stack: ["Education", "Real-time avatar", "Socratic style"],
+    href: "/p/b62e6dbb-cee3-4787-9c6b-9a2ea5e2d557",
+    cta: "Talk to Gabriel",
     note: null,
   },
   {
-    name: "Zekhtar",
-    role: "Desktop co-pilot",
-    voice: "native, always-on",
-    portrait: zekhtarPortrait,
+    name: "Mia",
+    role: "Lab concierge",
+    voice: "confident, crisp",
+    portrait: "https://lab.anam.ai/persona_thumbnails/mia_studio.png",
     body:
-      "The same persona memory, moved into the menu bar. Zekhtar runs natively on Apple Silicon and shares the backbone that powers the voice agents — one mind, a different surface.",
-    stack: ["macOS", "Apple Silicon", "Moss", "Supabase"],
-    href: "https://zekthar-landing.vercel.app/",
-    cta: "Get Zekhtar",
-    note: "Requires Apple Silicon · M1 / M2 / M3",
+      "The lab's own front door. Ask her what Goblin Labs does, how the Persona Studio works, or what it takes to deploy a persona of your own — she'll tell you, out loud.",
+    stack: ["Concierge", "Real-time avatar", "Knows the lab"],
+    href: "/p/77b7e33a-c096-4bb4-b70f-bdc988cf8925",
+    cta: "Talk to Mia",
+    note: null,
   },
 ];
 
@@ -337,9 +334,9 @@ export default function App() {
               Personas already <span className="font-serif-italic">on the job.</span>
             </h2>
             <p className="mx-auto mt-5 max-w-[560px] text-[15px] leading-relaxed text-muted-foreground">
-              Built in this lab, deployed live for Northstar Robotics — a
-              warehouse-automation deployment where named personas answer the
-              phones, work the tickets, and remember every caller.
+              Three personas, built and deployed with the exact pipeline you get
+              in the Studio. No demo video, no waitlist — click one and have a
+              conversation right now.
             </p>
           </motion.div>
 
@@ -404,8 +401,8 @@ export default function App() {
           </div>
 
           <p className="mt-14 text-center text-[11px] leading-relaxed text-muted-foreground sm:mt-16">
-            Northstar Robotics is a fictional customer used for the live demo.
-            The personas, memory, and integrations are real.
+            Live sessions run on real-time avatar synthesis — your browser will
+            ask for microphone access when you start a conversation.
           </p>
         </div>
       </section>
