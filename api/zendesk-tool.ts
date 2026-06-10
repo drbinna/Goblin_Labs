@@ -66,6 +66,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ ok: true, ticket: slim(out.ticket), message: `Created ticket #${out.ticket.id}` });
     }
 
+    if (action === "list_tickets") {
+      const status = String(args.status ?? "").trim().toLowerCase();
+      const valid = ["new", "open", "pending", "hold", "solved", "closed"];
+      const q = valid.includes(status) ? `type:ticket status:${status}` : "type:ticket";
+      const out = await zdFetch(`/search.json?query=${encodeURIComponent(q)}&sort_by=updated_at&sort_order=desc&per_page=10`);
+      const tickets = (out.results ?? []).map(slim);
+      return res.status(200).json({ ok: true, total_count: out.count ?? tickets.length, status: status || "all", tickets });
+    }
+
+    if (action === "update_status") {
+      const id = parseInt(String(args.ticket_id ?? ""), 10);
+      let status = String(args.status ?? "").trim().toLowerCase();
+      if (!id || !status) return res.status(400).json({ error: "ticket_id and status required" });
+      // Zendesk does not allow setting 'closed' directly; solved is the terminal agent state.
+      const note = status === "closed" ? " (Zendesk closes solved tickets automatically)" : "";
+      if (status === "closed") status = "solved";
+      if (!["open", "pending", "hold", "solved"].includes(status)) {
+        return res.status(400).json({ error: "status must be open, pending, hold, solved, or closed" });
+      }
+      const out = await zdFetch(`/tickets/${id}.json`, {
+        method: "PUT",
+        body: JSON.stringify({ ticket: { status } }),
+      });
+      return res.status(200).json({ ok: true, ticket: slim(out.ticket), message: `Ticket #${id} is now ${status}${note}` });
+    }
+
     if (action === "search_tickets") {
       const q = String(args.query ?? "").trim();
       if (!q) return res.status(400).json({ error: "query required" });

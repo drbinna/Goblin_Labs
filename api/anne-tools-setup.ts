@@ -10,14 +10,15 @@ const SITE = "https://goblin-labs.vercel.app";
 
 const PLAIN_SUPPORT_PROMPT = `You are Anne, a customer support persona built by Goblin Labs. You listen to problems carefully, ask the right follow-up questions, summarize the issue back clearly, and explain what would happen next in a support workflow. You are calm, capable, and concise. You do not currently have live access to ticketing systems, so you never claim to have created or updated a ticket — you describe what you would do. Keep replies short and conversational — this is a spoken conversation.`;
 
-const SUPPORT_PROMPT = `You are Anne, a customer support persona for Goblin Labs, integrated live with Zendesk. You can search existing tickets, create new tickets, and add internal notes using your tools.
+const SUPPORT_PROMPT = `You are Anne, Goblin Labs' Zendesk support operator. You work INSIDE the lab's own Zendesk and can see and manage every ticket in it. You are not gatekeeping a customer account — never ask for an email address, account verification, or identity before looking things up. Just use your tools.
 
 How to work:
-- When a customer describes a problem, gather the essentials conversationally: what happened, their email, and how urgent it feels. Then CREATE a ticket with a clear subject and a description summarizing the issue in your own words.
-- If they ask about an existing issue, SEARCH tickets first (by their email or keywords) and tell them what you find — ticket number, status, and what's happening.
-- After meaningful updates in the conversation, ADD an internal note to the relevant ticket summarizing what the customer said and what you did.
-- Always tell the customer what you just did ("I've opened ticket 42 for you").
-- Never invent ticket numbers or statuses — only report what your tools return. If a tool fails, say so honestly and offer to try again.
+- "How many tickets do we have / what's open?" -> LIST tickets (optionally by status) and report the count and the notable ones.
+- Asked about a specific issue or topic -> SEARCH by keywords from the conversation and report ticket number, subject, and status.
+- A new problem is described -> CREATE a ticket with a clear subject and a description in your own words. Ask for a requester email ONLY if they say the ticket is on behalf of a specific customer; otherwise create it without one.
+- Asked to update, close, reopen, or put a ticket on hold -> UPDATE its status (closing a ticket means marking it solved).
+- Worth recording -> ADD an internal note to the relevant ticket.
+- Always state what you did and the ticket number. Never invent ticket numbers, counts, or statuses — only report what your tools return. If a tool fails, say so honestly and retry once.
 Keep replies short and conversational — this is a spoken conversation.`;
 
 function toolDefs(secret: string) {
@@ -32,9 +33,43 @@ function toolDefs(secret: string) {
   return [
     {
       type: base.type,
+      name: "zendesk_list_tickets",
+      description:
+        "List tickets in the helpdesk and get the total count, optionally filtered by status (new, open, pending, hold, solved, closed). Use this whenever asked how many tickets exist or what is currently open — no email or identity needed.",
+      config: {
+        url: `${SITE}/api/zendesk-tool?action=list_tickets`,
+        ...base.config_common,
+        parameters: {
+          type: "object",
+          properties: {
+            status: { type: "string", description: "Optional status filter: new, open, pending, hold, solved, or closed. Omit for all tickets." },
+          },
+          required: [],
+        },
+      },
+    },
+    {
+      type: base.type,
+      name: "zendesk_search_tickets",
+      description:
+        "Search tickets by keywords from the conversation (subject words, topic, product, or a requester email if one was mentioned). Use when asked about a specific issue. Never ask the user for an email just to search.",
+      config: {
+        url: `${SITE}/api/zendesk-tool?action=search_tickets`,
+        ...base.config_common,
+        parameters: {
+          type: "object",
+          properties: {
+            query: { type: "string", description: "Search keywords, e.g. words from the ticket subject or topic" },
+          },
+          required: ["query"],
+        },
+      },
+    },
+    {
+      type: base.type,
       name: "zendesk_create_ticket",
       description:
-        "Create a new Zendesk support ticket when the customer reports a problem or requests help that needs follow-up. Summarize the issue in the description.",
+        "Create a new ticket when a new problem or request is described. Summarize the issue in the description. requester_email is optional — include it only if the ticket is on behalf of a specific customer.",
       config: {
         url: `${SITE}/api/zendesk-tool?action=create_ticket`,
         ...base.config_common,
@@ -43,9 +78,9 @@ function toolDefs(secret: string) {
           properties: {
             subject: { type: "string", description: "Short ticket subject summarizing the issue" },
             description: { type: "string", description: "Full description of the issue in plain language" },
-            requester_email: { type: "string", description: "The customer's email address, if they provided one" },
-            requester_name: { type: "string", description: "The customer's name, if known" },
-            priority: { type: "string", description: "low, normal, high, or urgent based on how severe it sounds" },
+            requester_email: { type: "string", description: "Optional: customer email if on behalf of a specific customer" },
+            requester_name: { type: "string", description: "Optional: customer name" },
+            priority: { type: "string", description: "low, normal, high, or urgent based on severity" },
           },
           required: ["subject", "description"],
         },
@@ -53,18 +88,19 @@ function toolDefs(secret: string) {
     },
     {
       type: base.type,
-      name: "zendesk_search_tickets",
+      name: "zendesk_update_status",
       description:
-        "Search existing Zendesk tickets when the customer asks about a previous issue or the status of a request. Search by their email address or keywords from the issue.",
+        "Change a ticket's status: open, pending, hold, or solved. Use when asked to close (= solved), reopen, or hold a ticket.",
       config: {
-        url: `${SITE}/api/zendesk-tool?action=search_tickets`,
+        url: `${SITE}/api/zendesk-tool?action=update_status`,
         ...base.config_common,
         parameters: {
           type: "object",
           properties: {
-            query: { type: "string", description: "Search terms: the customer's email (as requester:email) or keywords" },
+            ticket_id: { type: "string", description: "The ticket number to update" },
+            status: { type: "string", description: "open, pending, hold, solved, or closed (closed maps to solved)" },
           },
-          required: ["query"],
+          required: ["ticket_id", "status"],
         },
       },
     },
@@ -72,15 +108,15 @@ function toolDefs(secret: string) {
       type: base.type,
       name: "zendesk_add_note",
       description:
-        "Add an internal note to an existing Zendesk ticket to record what the customer said or what was done in this conversation.",
+        "Add an internal note to an existing ticket to record context or what was done in this conversation.",
       config: {
         url: `${SITE}/api/zendesk-tool?action=add_note`,
         ...base.config_common,
         parameters: {
           type: "object",
           properties: {
-            ticket_id: { type: "string", description: "The Zendesk ticket number to annotate" },
-            note: { type: "string", description: "The note content summarizing the update" },
+            ticket_id: { type: "string", description: "The ticket number to annotate" },
+            note: { type: "string", description: "The note content" },
           },
           required: ["ticket_id", "note"],
         },
@@ -123,7 +159,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const listRes2 = await fetch(`${ANAM_BASE}/tools`, { headers });
       const listBody2 = await listRes2.json().catch(() => ({}));
       const all: any[] = listBody2.data ?? listBody2.tools ?? (Array.isArray(listBody2) ? listBody2 : []);
-      for (const name of ["zendesk_create_ticket", "zendesk_search_tickets", "zendesk_add_note"]) {
+      for (const name of ["zendesk_create_ticket", "zendesk_search_tickets", "zendesk_add_note", "zendesk_list_tickets", "zendesk_update_status"]) {
         const t = all.find((x) => x.name === name);
         if (!t) continue;
         const del = await fetch(`${ANAM_BASE}/tools/${t.id}`, { method: "DELETE", headers });
