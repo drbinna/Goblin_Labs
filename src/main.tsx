@@ -17,6 +17,7 @@ const Talk = lazy(() => import("./app/routes/Talk.tsx"));
 const Login = lazy(() => import("./app/routes/Login.tsx"));
 const Personas = lazy(() => import("./app/routes/Personas.tsx"));
 const SupportDemo = lazy(() => import("./app/routes/SupportDemo.tsx"));
+const LeadGenDemo = lazy(() => import("./app/routes/LeadGenDemo.tsx"));
 
 createRoot(document.getElementById("root")!).render(
   <ClerkProvider publishableKey={CLERK_PK} afterSignOutUrl="/">
@@ -44,6 +45,14 @@ createRoot(document.getElementById("root")!).render(
           element={
             <Suspense fallback={null}>
               <Login />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/demo/leadgen"
+          element={
+            <Suspense fallback={null}>
+              <LeadGenDemo />
             </Suspense>
           }
         />

@@ -74,12 +74,12 @@ const DEPLOYED_PERSONAS = [
   },
   {
     name: "Gabriel",
-    role: "Tutor",
-    voice: "patient, encouraging",
+    role: "Lead gen",
+    voice: "warm, sharp",
     portrait: "https://lab.anam.ai/persona_thumbnails/gabriel_table.png",
     body:
-      "Teaches by asking the next right question instead of handing over answers — math, writing, science, study habits. Adapts to the learner's pace and notices when something finally clicks.",
-    stack: ["Education", "Real-time avatar", "Socratic style"],
+      "Talks to prospects like a person, not a form. He learns what they need, captures the lead into the CRM mid-conversation, and books the meeting before the call ends — name, email, need, time, done.",
+    stack: ["Sales", "Real-time avatar", "CRM + calendar"],
     href: "/p/b62e6dbb-cee3-4787-9c6b-9a2ea5e2d557",
     cta: "Talk to Gabriel",
     note: null,
