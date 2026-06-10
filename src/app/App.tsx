@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
+import avaPortrait from "@/assets/personas/ava.webp";
+import samPortrait from "@/assets/personas/sam.webp";
+import zekhtarPortrait from "@/assets/personas/zekhtar.webp";
 import { ArrowRight, ArrowUpRight, Github, Twitter, Linkedin } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import heroShadow from "@/imports/hero-shadow.webp";
@@ -58,6 +61,45 @@ const fadeUp = (delay = 0) => ({
   viewport: { once: true, margin: "-80px" },
   transition: { duration: 0.7, delay, ease: [0.2, 0.7, 0.2, 1] as const },
 });
+
+const DEPLOYED_PERSONAS = [
+  {
+    name: "Ava",
+    role: "Lead gen",
+    voice: "warm, outbound",
+    portrait: avaPortrait,
+    body:
+      "Qualifies inbound leads the moment they arrive — fit, intent, next step. She listens in real time, recognizes returning callers across sessions, and lands every lead in the CRM without a rep round-tripping.",
+    stack: ["Anam", "LiveKit", "Moss", "Supabase", "GPT-4o"],
+    href: "https://main.d24wdxotw4ntqn.amplifyapp.com/",
+    cta: "Talk to Ava live",
+    note: null,
+  },
+  {
+    name: "Sam",
+    role: "Support",
+    voice: "calm, grounded",
+    portrait: samPortrait,
+    body:
+      "Reads live Zendesk tickets, pulls answers out of runbook PDFs, and grounds every reply in retrieved source documents. Drops internal notes or escalates to a specialist — no context lost between calls.",
+    stack: ["Anam", "LiveKit", "Moss", "Zendesk", "Unsiloed", "GPT-4o"],
+    href: "https://main.d24wdxotw4ntqn.amplifyapp.com/",
+    cta: "Talk to Sam live",
+    note: null,
+  },
+  {
+    name: "Zekhtar",
+    role: "Desktop co-pilot",
+    voice: "native, always-on",
+    portrait: zekhtarPortrait,
+    body:
+      "The same persona memory, moved into the menu bar. Zekhtar runs natively on Apple Silicon and shares the backbone that powers the voice agents — one mind, a different surface.",
+    stack: ["macOS", "Apple Silicon", "Moss", "Supabase"],
+    href: "https://zekthar-landing.vercel.app/",
+    cta: "Get Zekhtar",
+    note: "Requires Apple Silicon · M1 / M2 / M3",
+  },
+];
 
 function GlassIcon({ children, label }: { children: ReactNode; label: string }) {
   return (
@@ -281,6 +323,90 @@ export default function App() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Deployed personas — live proof from the Recall deployment */}
+      <section id="deployed" className="border-t border-border/40 px-6 py-16 sm:py-20 md:px-12 md:py-36">
+        <div className="mx-auto max-w-[1200px]">
+          <motion.div {...fadeUp(0)} className="text-center">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+              Field work
+            </div>
+            <h2 className="mt-4 text-balance text-[clamp(2.25rem,5vw,4.5rem)] font-medium tracking-[-0.025em]">
+              Personas already <span className="font-serif-italic">on the job.</span>
+            </h2>
+            <p className="mx-auto mt-5 max-w-[560px] text-[15px] leading-relaxed text-muted-foreground">
+              Built in this lab, deployed live for Northstar Robotics — a
+              warehouse-automation deployment where named personas answer the
+              phones, work the tickets, and remember every caller.
+            </p>
+          </motion.div>
+
+          <div className="mt-14 flex flex-col gap-14 sm:mt-20 sm:gap-20">
+            {DEPLOYED_PERSONAS.map((p, i) => (
+              <motion.article
+                key={p.name}
+                {...fadeUp(0.05)}
+                className={`flex flex-col items-center gap-8 md:gap-14 ${
+                  i % 2 === 1 ? "md:flex-row-reverse" : "md:flex-row"
+                }`}
+              >
+                <div className="relative w-full max-w-[340px] shrink-0 md:max-w-[380px]">
+                  <div className="overflow-hidden rounded-2xl border border-border/50">
+                    <img
+                      src={p.portrait}
+                      alt={`${p.name} — ${p.role} persona`}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-auto w-full object-cover transition-transform duration-500 hover:scale-[1.02]"
+                    />
+                  </div>
+                  <div className="pointer-events-none absolute -left-2 -top-5 select-none text-[4.5rem] font-medium leading-none tracking-tight text-foreground/10 md:-left-6">
+                    0{i + 1}
+                  </div>
+                </div>
+
+                <div className="w-full max-w-[520px]">
+                  <div className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                    {p.role} persona · {p.voice}
+                  </div>
+                  <h3 className="mt-2 text-[2rem] font-medium tracking-tight md:text-[2.5rem]">
+                    {p.name}
+                  </h3>
+                  <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
+                    {p.body}
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {p.stack.map((s2) => (
+                      <span
+                        key={s2}
+                        className="rounded-full border border-border/60 px-3 py-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
+                      >
+                        {s2}
+                      </span>
+                    ))}
+                  </div>
+                  <a
+                    href={p.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-7 inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-background transition-opacity hover:opacity-90"
+                  >
+                    {p.cta}
+                  </a>
+                  {p.note && (
+                    <div className="mt-3 text-[11px] text-muted-foreground">{p.note}</div>
+                  )}
+                </div>
+              </motion.article>
+            ))}
+          </div>
+
+          <p className="mt-14 text-center text-[11px] leading-relaxed text-muted-foreground sm:mt-16">
+            Northstar Robotics is a fictional customer used for the live demo.
+            The personas, memory, and integrations are real.
+          </p>
         </div>
       </section>
 
