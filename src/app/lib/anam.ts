@@ -166,6 +166,33 @@ async function streamToken(videoEl: HTMLVideoElement, token: string): Promise<Se
 
 export type SessionTimings = { tokenMs: number; firstFrameMs: number; totalMs: number };
 
+// Talk pages: stream a deployed persona by reference (stateful — attached
+// tools load this way). Falls back to the rebuilt ephemeral config if the
+// reference mint fails.
+export async function startTalk(
+  videoEl: HTMLVideoElement,
+  personaId: string,
+  fallbackConfig: PersonaConfig,
+): Promise<SessionHandle & { timings: SessionTimings }> {
+  const t0 = performance.now();
+  let token: string;
+  try {
+    token = await fetchSessionToken({ personaConfig: { personaId } as unknown as PersonaConfig });
+  } catch {
+    token = await fetchSessionToken({ personaConfig: fallbackConfig });
+  }
+  const t1 = performance.now();
+  const handle = await streamToken(videoEl, token);
+  const t2 = performance.now();
+  const timings: SessionTimings = {
+    tokenMs: Math.round(t1 - t0),
+    firstFrameMs: Math.round(t2 - t1),
+    totalMs: Math.round(t2 - t0),
+  };
+  console.info("[anam] talk timings (ms):", timings);
+  return { ...handle, timings };
+}
+
 // Studio: stream an ad-hoc persona built from the current builder config.
 // Returns timing breakdown so we can see exactly where the wait is spent.
 export async function startPreview(

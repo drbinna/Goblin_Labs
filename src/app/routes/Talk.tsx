@@ -54,7 +54,7 @@ export default function Talk() {
         if (p) setPersona(p);
       }
       if (!p) throw new Error("This persona could not be found.");
-      handleRef.current = await startPreview(videoRef.current, p.config);
+      handleRef.current = await startTalk(videoRef.current, p.id, p.config);
       setPhase("live");
     } catch (e: any) {
       setErr(e?.message ?? String(e));
