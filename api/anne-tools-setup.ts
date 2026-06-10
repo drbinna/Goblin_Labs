@@ -7,8 +7,9 @@ import { getUserId } from "./_auth.js";
 const ANAM_BASE = "https://api.anam.ai/v1";
 const ANNE_ID = "6b4df3c2-c9ce-49e7-a95b-8816e8216586";
 const SITE = "https://goblin-labs.vercel.app";
+const LLM_ID = "a7cf662c-2ace-4de1-a21e-ef0fbf144bb7"; // GPT-4o-mini — PUT replaces brain wholesale, so always resend
 
-const PLAIN_SUPPORT_PROMPT = `You are Anne, a customer support persona built by Goblin Labs. You listen to problems carefully, ask the right follow-up questions, summarize the issue back clearly, and explain what would happen next in a support workflow. You are calm, capable, and concise. You do not currently have live access to ticketing systems, so you never claim to have created or updated a ticket — you describe what you would do. Keep replies short and conversational — this is a spoken conversation.`;
+const PLAIN_SUPPORT_PROMPT = `You are Anne, a customer support persona built by Goblin Labs. You listen to problems carefully, ask the right follow-up questions, summarize the issue back clearly, and explain what would happen next in a support workflow. You are calm, capable, and concise. You do not currently have live access to ticketing systems, so you never claim to have created or updated a ticket — you describe what you would do. Always respond in English unless the person clearly speaks another language first. Keep replies short and conversational — this is a spoken conversation.`;
 
 const SUPPORT_PROMPT = `You are Anne, Goblin Labs' Zendesk support operator. You work INSIDE the lab's own Zendesk and can see and manage every ticket in it. You are not gatekeeping a customer account — never ask for an email address, account verification, or identity before looking things up. Just use your tools.
 
@@ -19,7 +20,7 @@ How to work:
 - Asked to update, close, or reopen a ticket -> UPDATE its status: open, pending (waiting), or solved (closing a ticket means marking it solved).
 - Worth recording -> ADD an internal note to the relevant ticket.
 - Always state what you did and the ticket number. Never invent ticket numbers, counts, or statuses — only report what your tools return. If a tool fails, say so honestly and retry once.
-Keep replies short and conversational — this is a spoken conversation.`;
+Always respond in English unless the person clearly speaks another language first. Keep replies short and conversational — this is a spoken conversation.`;
 
 function toolDefs(secret: string) {
   const base = {
@@ -151,7 +152,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const putRes = await fetch(`${ANAM_BASE}/personas/${ANNE_ID}`, {
         method: "PUT",
         headers,
-        body: JSON.stringify({ name: "Anne — Support", toolIds: [], brain: { systemPrompt: PLAIN_SUPPORT_PROMPT } }),
+        body: JSON.stringify({ name: "Anne — Support", toolIds: [], brain: { systemPrompt: PLAIN_SUPPORT_PROMPT, llmId: LLM_ID } }),
       });
       if (!putRes.ok) throw new Error(`restore persona: ${putRes.status}`);
       steps.push("Anne restored to tool-less support persona, tools detached");
@@ -197,7 +198,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const putRes = await fetch(`${ANAM_BASE}/personas/${ANNE_ID}`, {
       method: "PUT",
       headers,
-      body: JSON.stringify({ name: "Anne — Support", toolIds, brain: { systemPrompt: SUPPORT_PROMPT } }),
+      body: JSON.stringify({ name: "Anne — Support", toolIds, brain: { systemPrompt: SUPPORT_PROMPT, llmId: LLM_ID } }),
     });
     const putBody = await putRes.json().catch(() => ({}));
     if (!putRes.ok) throw new Error(`update persona: ${putRes.status} ${JSON.stringify(putBody).slice(0, 300)}`);

@@ -8,6 +8,7 @@ import { getUserId } from "./_auth.js";
 const ANAM_BASE = "https://api.anam.ai/v1";
 const GABRIEL_ID = "b62e6dbb-cee3-4787-9c6b-9a2ea5e2d557";
 const SITE = "https://goblin-labs.vercel.app";
+const LLM_ID = "a7cf662c-2ace-4de1-a21e-ef0fbf144bb7"; // GPT-4o-mini — PUT replaces brain wholesale, so always resend
 
 const LEADGEN_PROMPT_TOOLS = `You are Gabriel, a lead-generation persona for Goblin Labs, connected live to the CRM. Your job: have a natural conversation with a prospect, understand what they need, capture them as a lead, and book a meeting.
 
@@ -17,9 +18,9 @@ How to work:
 - Then offer to set up a meeting. When they give a time, convert it to an ISO 8601 datetime and BOOK the appointment against their email.
 - Always tell them what you did ("You're in the system — I've got us down for Thursday at 2").
 - Never invent CRM state; only report what your tools return. If a tool fails, say so and offer to retry.
-Keep replies short and conversational — this is a spoken conversation.`;
+Always respond in English unless the person clearly speaks another language first. Keep replies short and conversational — this is a spoken conversation.`;
 
-const LEADGEN_PROMPT_PLAIN = `You are Gabriel, a lead-generation persona for Goblin Labs. You have natural conversations with prospects, understand what they need, collect their name, email, and company, and offer to set up a meeting with the team. You are warm, sharp, and never pushy. Keep replies short and conversational — this is a spoken conversation.`;
+const LEADGEN_PROMPT_PLAIN = `You are Gabriel, a lead-generation persona for Goblin Labs. You have natural conversations with prospects, understand what they need, collect their name, email, and company, and offer to set up a meeting with the team. You are warm, sharp, and never pushy. Always respond in English unless the person clearly speaks another language first. Keep replies short and conversational — this is a spoken conversation.`;
 
 function toolDefs(secret: string) {
   const common = { method: "POST", headers: { "x-tool-secret": secret }, awaitResponse: true };
@@ -99,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const putRes = await fetch(`${ANAM_BASE}/personas/${GABRIEL_ID}`, {
         method: "PUT",
         headers,
-        body: JSON.stringify({ toolIds: [], brain: { systemPrompt: LEADGEN_PROMPT_PLAIN } }),
+        body: JSON.stringify({ toolIds: [], brain: { systemPrompt: LEADGEN_PROMPT_PLAIN, llmId: LLM_ID } }),
       });
       if (!putRes.ok) throw new Error(`restore persona: ${putRes.status}`);
       steps.push("Gabriel detached from tools (lead-gen prompt kept)");
@@ -130,7 +131,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const putRes = await fetch(`${ANAM_BASE}/personas/${GABRIEL_ID}`, {
       method: "PUT",
       headers,
-      body: JSON.stringify({ name: "Gabriel — Lead Gen", toolIds, brain: { systemPrompt: LEADGEN_PROMPT_TOOLS } }),
+      body: JSON.stringify({ name: "Gabriel — Lead Gen", toolIds, brain: { systemPrompt: LEADGEN_PROMPT_TOOLS, llmId: LLM_ID } }),
     });
     if (!putRes.ok) {
       const b = await putRes.json().catch(() => ({}));
