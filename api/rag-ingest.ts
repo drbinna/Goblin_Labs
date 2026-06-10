@@ -3,7 +3,7 @@
 // field server-side (voyage-4-lite) — no embedding code on our side.
 // Node runtime (Mongo driver needs TCP); do NOT mark as edge.
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { knowledgeCollection, chunkText, htmlToText } from "./_rag";
+import { knowledgeCollection, chunkText, htmlToText } from "./_rag.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });

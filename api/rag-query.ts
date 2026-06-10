@@ -2,7 +2,7 @@
 // Atlas Automated Embedding lets $vectorSearch take the raw text query and
 // embed it server-side with the same model as the index. Node runtime.
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { knowledgeCollection, VECTOR_INDEX } from "./_rag";
+import { knowledgeCollection, VECTOR_INDEX } from "./_rag.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
