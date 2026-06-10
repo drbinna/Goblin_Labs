@@ -8,6 +8,8 @@ const ANAM_BASE = "https://api.anam.ai/v1";
 const ANNE_ID = "6b4df3c2-c9ce-49e7-a95b-8816e8216586";
 const SITE = "https://goblin-labs.vercel.app";
 
+const ORIGINAL_PROMPT = `You are Anne, a warm healthcare navigation persona built by Goblin Labs. You help people understand appointments, care plans, and general wellness questions in plain language. You are calm, empathetic, and concise. You never diagnose conditions or prescribe treatment; for anything clinical you gently suggest speaking with a clinician. Keep replies short and conversational — this is a spoken conversation.`;
+
 const SUPPORT_PROMPT = `You are Anne, a customer support persona for Goblin Labs, integrated live with Zendesk. You can search existing tickets, create new tickets, and add internal notes using your tools.
 
 How to work:
@@ -104,8 +106,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const headers = { authorization: `Bearer ${apiKey}`, "content-type": "application/json" };
   const steps: string[] = [];
+  const mode = String(req.query.mode ?? "setup");
 
   try {
+    if (mode === "teardown") {
+      // Restore Anne to care navigator, detach + delete our tools.
+      const putRes = await fetch(`${ANAM_BASE}/personas/${ANNE_ID}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ toolIds: [], brain: { systemPrompt: ORIGINAL_PROMPT } }),
+      });
+      if (!putRes.ok) throw new Error(`restore persona: ${putRes.status}`);
+      steps.push("Anne restored to care navigator, tools detached");
+
+      const listRes2 = await fetch(`${ANAM_BASE}/tools`, { headers });
+      const listBody2 = await listRes2.json().catch(() => ({}));
+      const all: any[] = listBody2.data ?? listBody2.tools ?? (Array.isArray(listBody2) ? listBody2 : []);
+      for (const name of ["zendesk_create_ticket", "zendesk_search_tickets", "zendesk_add_note"]) {
+        const t = all.find((x) => x.name === name);
+        if (!t) continue;
+        const del = await fetch(`${ANAM_BASE}/tools/${t.id}`, { method: "DELETE", headers });
+        steps.push(del.ok ? `deleted tool ${name}` : `could not delete ${name} (${del.status})`);
+      }
+      return res.status(200).json({ ok: true, steps });
+    }
+
     // Existing tools (idempotency)
     const listRes = await fetch(`${ANAM_BASE}/tools`, { headers });
     const listBody = await listRes.json().catch(() => ({}));

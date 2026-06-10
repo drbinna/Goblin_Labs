@@ -2,20 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useAuth, UserButton } from "@clerk/clerk-react";
 import { createClient, AnamEvent } from "@anam-ai/js-sdk";
-import { Loader2, PhoneOff, Sparkles, Wrench, Check, RefreshCw } from "lucide-react";
+import { Loader2, PhoneOff, Sparkles, Wrench, Check, Trash2 } from "lucide-react";
 
 const ANNE_ID = "6b4df3c2-c9ce-49e7-a95b-8816e8216586";
 
 type ToolEvent = { id: string; name: string; status: "running" | "done" | "failed"; ms?: number; at: number };
-type Ticket = {
-  id: number;
-  subject: string;
-  status: string;
-  priority: string | null;
-  updated_at: string;
-  via_anne: boolean;
-};
-
 async function fetchSessionTokenForAnne(): Promise<string> {
   // Stateful persona: tools attached to Anne load automatically.
   const res = await fetch("/api/session-token", {
@@ -33,35 +24,12 @@ export default function SupportDemo() {
   const [phase, setPhase] = useState<"idle" | "connecting" | "live" | "ended" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
   const [toolEvents, setToolEvents] = useState<ToolEvent[]>([]);
-  const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [setupMsg, setSetupMsg] = useState<string | null>(null);
   const [settingUp, setSettingUp] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const clientRef = useRef<any>(null);
   const seenRef = useRef<Set<number>>(new Set());
-
-  // Poll Zendesk activity while signed in (faster while live).
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-    let stop = false;
-    const tick = async () => {
-      try {
-        const token = await getToken();
-        const r = await fetch("/api/zendesk-activity", { headers: { authorization: `Bearer ${token}` } });
-        if (r.ok) {
-          const d = await r.json();
-          if (!stop) setTickets(d.tickets ?? []);
-        }
-      } catch {}
-    };
-    tick();
-    const iv = setInterval(tick, phase === "live" ? 4000 : 12000);
-    return () => {
-      stop = true;
-      clearInterval(iv);
-    };
-  }, [isLoaded, isSignedIn, getToken, phase]);
 
   useEffect(() => {
     return () => {
@@ -114,12 +82,12 @@ export default function SupportDemo() {
     setPhase("ended");
   }
 
-  async function runSetup() {
+  async function runSetup(teardown = false) {
     setSettingUp(true);
     setSetupMsg(null);
     try {
       const token = await getToken();
-      const r = await fetch("/api/anne-tools-setup", {
+      const r = await fetch(`/api/anne-tools-setup${teardown ? "?mode=teardown" : ""}`, {
         method: "POST",
         headers: { authorization: `Bearer ${token}` },
       });
@@ -131,8 +99,6 @@ export default function SupportDemo() {
       setSettingUp(false);
     }
   }
-
-  const fresh = (iso: string) => Date.now() - new Date(iso).getTime() < 30_000;
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
@@ -209,45 +175,18 @@ export default function SupportDemo() {
             </ul>
           </section>
 
-          <section className="rounded-2xl border border-border/60 p-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Zendesk — live</h2>
-              <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
-            {!isSignedIn ? (
-              <p className="mt-3 text-[12px] text-muted-foreground">
-                <Link to="/login?redirect=/demo/support" className="text-foreground underline">Sign in</Link> to see the live ticket feed.
-              </p>
-            ) : tickets === null ? (
-              <div className="mt-3 flex items-center gap-2 text-[12px] text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Loading tickets…</div>
-            ) : tickets.length === 0 ? (
-              <p className="mt-3 text-[12px] text-muted-foreground">No tickets yet — ask Anne to open one.</p>
-            ) : (
-              <ul className="mt-3 flex max-h-[340px] flex-col gap-2 overflow-y-auto">
-                {tickets.map((t) => (
-                  <li key={t.id} className={`rounded-lg border px-3 py-2 transition-colors ${fresh(t.updated_at) ? "border-foreground/60 bg-foreground/5" : "border-border/50"}`}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-[13px]">#{t.id} · {t.subject}</span>
-                      {t.via_anne && <span className="shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">Anne</span>}
-                    </div>
-                    <div className="mt-1 flex items-center gap-2 text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
-                      <span>{t.status}</span>{t.priority && <span>· {t.priority}</span>}
-                      {fresh(t.updated_at) && <span className="text-foreground">· just updated</span>}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
 
           {isSignedIn && (
             <section className="rounded-2xl border border-dashed border-border/60 p-4">
               <h2 className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">One-time wiring</h2>
               <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                Creates Anne's Zendesk tools at Anam and switches her to the support role. Idempotent — safe to re-run.
+                Wire up before recording; tear down after. Keep your Zendesk dashboard open in another tab — changes land there live.
               </p>
-              <button onClick={runSetup} disabled={settingUp} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2 text-[12px] hover:bg-foreground/5 disabled:opacity-50">
+              <button onClick={() => runSetup(false)} disabled={settingUp} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2 text-[12px] hover:bg-foreground/5 disabled:opacity-50">
                 {settingUp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wrench className="h-3.5 w-3.5" />} Wire up Anne × Zendesk
+              </button>
+              <button onClick={() => runSetup(true)} disabled={settingUp} className="ml-2 mt-3 inline-flex items-center gap-2 rounded-lg border border-destructive/40 px-3 py-2 text-[12px] text-destructive hover:bg-destructive/5 disabled:opacity-50">
+                <Trash2 className="h-3.5 w-3.5" /> Tear down
               </button>
               {setupMsg && <div className="mt-2 break-words text-[11px] text-muted-foreground">{setupMsg}</div>}
             </section>
