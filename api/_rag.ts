@@ -87,7 +87,7 @@ export async function ensureSetup(): Promise<{ steps: string[] }> {
       type: "vectorSearch",
       definition: {
         fields: [
-          { type: "autoEmbed", path: "chunk", model: EMBED_MODEL },
+          { type: "autoEmbed", path: "chunk", model: EMBED_MODEL, modality: "text" },
           { type: "filter", path: "personaId" },
         ],
       },

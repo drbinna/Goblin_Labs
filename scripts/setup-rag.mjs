@@ -45,7 +45,7 @@ if (indexes.some((i) => i.name === INDEX)) {
     type: "vectorSearch",
     definition: {
       fields: [
-        { type: "autoEmbed", path: "chunk", model: MODEL },
+        { type: "autoEmbed", path: "chunk", model: MODEL, modality: "text" },
         { type: "filter", path: "personaId" },
       ],
     },
