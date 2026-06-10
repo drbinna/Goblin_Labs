@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router";
 import { Loader2, Mic, PhoneOff, Sparkles } from "lucide-react";
 import {
-  startPreview,
+  startTalk,
   getPersona,
   type SessionHandle,
   type DeployedPersona,
