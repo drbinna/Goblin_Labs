@@ -152,7 +152,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const putRes = await fetch(`${ANAM_BASE}/personas/${ANNE_ID}`, {
         method: "PUT",
         headers,
-        body: JSON.stringify({ name: "Anne — Support", toolIds: [], brain: { systemPrompt: PLAIN_SUPPORT_PROMPT, llmId: LLM_ID } }),
+        body: JSON.stringify({ name: "Anne — Support", llmId: LLM_ID, toolIds: [], brain: { systemPrompt: PLAIN_SUPPORT_PROMPT, llmId: LLM_ID } }),
       });
       if (!putRes.ok) throw new Error(`restore persona: ${putRes.status}`);
       steps.push("Anne restored to tool-less support persona, tools detached");
@@ -198,7 +198,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const putRes = await fetch(`${ANAM_BASE}/personas/${ANNE_ID}`, {
       method: "PUT",
       headers,
-      body: JSON.stringify({ name: "Anne — Support", toolIds, brain: { systemPrompt: SUPPORT_PROMPT, llmId: LLM_ID } }),
+      body: JSON.stringify({ name: "Anne — Support", llmId: LLM_ID, toolIds, brain: { systemPrompt: SUPPORT_PROMPT, llmId: LLM_ID } }),
     });
     const putBody = await putRes.json().catch(() => ({}));
     if (!putRes.ok) throw new Error(`update persona: ${putRes.status} ${JSON.stringify(putBody).slice(0, 300)}`);

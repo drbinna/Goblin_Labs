@@ -100,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const putRes = await fetch(`${ANAM_BASE}/personas/${GABRIEL_ID}`, {
         method: "PUT",
         headers,
-        body: JSON.stringify({ toolIds: [], brain: { systemPrompt: LEADGEN_PROMPT_PLAIN, llmId: LLM_ID } }),
+        body: JSON.stringify({ llmId: LLM_ID, toolIds: [], brain: { systemPrompt: LEADGEN_PROMPT_PLAIN, llmId: LLM_ID } }),
       });
       if (!putRes.ok) throw new Error(`restore persona: ${putRes.status}`);
       steps.push("Gabriel detached from tools (lead-gen prompt kept)");
@@ -131,7 +131,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const putRes = await fetch(`${ANAM_BASE}/personas/${GABRIEL_ID}`, {
       method: "PUT",
       headers,
-      body: JSON.stringify({ name: "Gabriel — Lead Gen", toolIds, brain: { systemPrompt: LEADGEN_PROMPT_TOOLS, llmId: LLM_ID } }),
+      body: JSON.stringify({ name: "Gabriel — Lead Gen", llmId: LLM_ID, toolIds, brain: { systemPrompt: LEADGEN_PROMPT_TOOLS, llmId: LLM_ID } }),
     });
     if (!putRes.ok) {
       const b = await putRes.json().catch(() => ({}));
