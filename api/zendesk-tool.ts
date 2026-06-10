@@ -79,11 +79,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const id = parseInt(String(args.ticket_id ?? ""), 10);
       let status = String(args.status ?? "").trim().toLowerCase();
       if (!id || !status) return res.status(400).json({ error: "ticket_id and status required" });
-      // Zendesk does not allow setting 'closed' directly; solved is the terminal agent state.
-      const note = status === "closed" ? " (Zendesk closes solved tickets automatically)" : "";
-      if (status === "closed") status = "solved";
-      if (!["open", "pending", "hold", "solved"].includes(status)) {
-        return res.status(400).json({ error: "status must be open, pending, hold, solved, or closed" });
+      // Zendesk: 'closed' cannot be set directly (solved is terminal for agents),
+      // and 'hold' is not enabled on this account — map both to supported states.
+      let note = "";
+      if (status === "closed") { status = "solved"; note = " (Zendesk closes solved tickets automatically)"; }
+      if (status === "hold") { status = "pending"; note = " (on-hold isn't enabled here; pending is the waiting state)"; }
+      if (!["open", "pending", "solved"].includes(status)) {
+        return res.status(400).json({ error: "status must be open, pending, solved, or closed" });
       }
       const out = await zdFetch(`/tickets/${id}.json`, {
         method: "PUT",

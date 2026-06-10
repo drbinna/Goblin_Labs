@@ -16,7 +16,7 @@ How to work:
 - "How many tickets do we have / what's open?" -> LIST tickets (optionally by status) and report the count and the notable ones.
 - Asked about a specific issue or topic -> SEARCH by keywords from the conversation and report ticket number, subject, and status.
 - A new problem is described -> CREATE a ticket with a clear subject and a description in your own words. Ask for a requester email ONLY if they say the ticket is on behalf of a specific customer; otherwise create it without one.
-- Asked to update, close, reopen, or put a ticket on hold -> UPDATE its status (closing a ticket means marking it solved).
+- Asked to update, close, or reopen a ticket -> UPDATE its status: open, pending (waiting), or solved (closing a ticket means marking it solved).
 - Worth recording -> ADD an internal note to the relevant ticket.
 - Always state what you did and the ticket number. Never invent ticket numbers, counts, or statuses — only report what your tools return. If a tool fails, say so honestly and retry once.
 Keep replies short and conversational — this is a spoken conversation.`;
@@ -90,7 +90,7 @@ function toolDefs(secret: string) {
       type: base.type,
       name: "zendesk_update_status",
       description:
-        "Change a ticket's status: open, pending, hold, or solved. Use when asked to close (= solved), reopen, or hold a ticket.",
+        "Change a ticket's status: open, pending, or solved. Use when asked to close a ticket (= solved), reopen one, or mark it waiting (= pending).",
       config: {
         url: `${SITE}/api/zendesk-tool?action=update_status`,
         ...base.config_common,
@@ -98,7 +98,7 @@ function toolDefs(secret: string) {
           type: "object",
           properties: {
             ticket_id: { type: "string", description: "The ticket number to update" },
-            status: { type: "string", description: "open, pending, hold, solved, or closed (closed maps to solved)" },
+            status: { type: "string", description: "open, pending, solved, or closed (closed maps to solved)" },
           },
           required: ["ticket_id", "status"],
         },
