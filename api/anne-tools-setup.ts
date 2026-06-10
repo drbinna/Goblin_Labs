@@ -22,8 +22,7 @@ Keep replies short and conversational — this is a spoken conversation.`;
 
 function toolDefs(secret: string) {
   const base = {
-    type: "server",
-    subtype: "webhook",
+    type: "SERVER_WEBHOOK",
     config_common: {
       method: "POST",
       headers: { "x-tool-secret": secret },
@@ -33,7 +32,6 @@ function toolDefs(secret: string) {
   return [
     {
       type: base.type,
-      subtype: base.subtype,
       name: "zendesk_create_ticket",
       description:
         "Create a new Zendesk support ticket when the customer reports a problem or requests help that needs follow-up. Summarize the issue in the description.",
@@ -55,7 +53,6 @@ function toolDefs(secret: string) {
     },
     {
       type: base.type,
-      subtype: base.subtype,
       name: "zendesk_search_tickets",
       description:
         "Search existing Zendesk tickets when the customer asks about a previous issue or the status of a request. Search by their email address or keywords from the issue.",
@@ -73,7 +70,6 @@ function toolDefs(secret: string) {
     },
     {
       type: base.type,
-      subtype: base.subtype,
       name: "zendesk_add_note",
       description:
         "Add an internal note to an existing Zendesk ticket to record what the customer said or what was done in this conversation.",

@@ -25,8 +25,7 @@ function toolDefs(secret: string) {
   const common = { method: "POST", headers: { "x-tool-secret": secret }, awaitResponse: true };
   return [
     {
-      type: "server",
-      subtype: "webhook",
+      type: "SERVER_WEBHOOK",
       name: "crm_create_lead",
       description:
         "Create a new lead in the CRM once you have the prospect's name, email, and what they need. Use a priority matching how urgent or high-value they sound.",
@@ -47,8 +46,7 @@ function toolDefs(secret: string) {
       },
     },
     {
-      type: "server",
-      subtype: "webhook",
+      type: "SERVER_WEBHOOK",
       name: "crm_book_appointment",
       description:
         "Book a meeting for an existing lead after they agree on a time. Requires the lead to have been created first. Convert spoken times to ISO 8601.",
