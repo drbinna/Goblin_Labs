@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useAuth, UserButton } from "@clerk/clerk-react";
 import { motion } from "motion/react";
 import { ArrowLeft, ArrowRight, Check, Loader2, Play, Plus, Sparkles, Upload, X } from "lucide-react";
 import { EtherealShadow } from "@/app/components/ui/etheral-shadow";
@@ -100,6 +101,24 @@ export default function Studio() {
   const [previewErr, setPreviewErr] = useState<string | null>(null);
   const [deployId, setDeployId] = useState<string | null>(null);
   const [deploying, setDeploying] = useState(false);
+  const { isLoaded: authLoaded, isSignedIn, getToken } = useAuth();
+  const navigate = useNavigate();
+
+  // Restore an in-progress config saved before a login redirect.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("studio-draft");
+      if (!raw) return;
+      localStorage.removeItem("studio-draft");
+      const d = JSON.parse(raw) as { name?: string; verticalTitle?: string; avatarId?: string; voiceId?: string };
+      if (d.name) setName(d.name);
+      const v = VERTICALS.find((x) => x.title === d.verticalTitle);
+      if (v) { setVertical(v); setTone(v.suggestedTone); }
+      if (d.avatarId) setAvatarId(d.avatarId);
+      if (d.voiceId) setVoiceId(d.voiceId);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [copied, setCopied] = useState(false);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
   const [catalogErr, setCatalogErr] = useState<string | null>(null);
@@ -243,11 +262,29 @@ export default function Studio() {
   }
 
   async function deploy() {
+    // Deploying ties a persona to an account; require sign-in. Preserve the
+    // in-progress config across the login redirect so nothing is lost.
+    if (authLoaded && !isSignedIn) {
+      try {
+        localStorage.setItem("studio-draft", JSON.stringify({ name, verticalTitle: vertical.title, avatarId, voiceId }));
+      } catch {}
+      navigate("/login?redirect=/studio");
+      return;
+    }
     setDeploying(true);
     try {
       // Usually already resolved from the preview pre-warm; otherwise creates now.
       const { id } = await ensurePersona(config);
       setDeployId(id);
+      // Record ownership so it appears under /personas (best-effort).
+      try {
+        const token = await getToken();
+        await fetch("/api/personas-mine", {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+          body: JSON.stringify({ anamPersonaId: id, name: config.name, vertical: vertical.title }),
+        });
+      } catch {}
     } catch (e: any) {
       setPreviewErr(e.message ?? String(e));
     } finally {
@@ -297,7 +334,20 @@ export default function Studio() {
           <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
             Persona Studio
           </div>
-          <div className="w-24" />
+          <div className="flex w-24 items-center justify-end gap-3">
+            {isSignedIn ? (
+              <>
+                <Link to="/personas" className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground">
+                  Mine
+                </Link>
+                <UserButton />
+              </>
+            ) : (
+              <Link to="/login?redirect=/studio" className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground">
+                Sign in
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
