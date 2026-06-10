@@ -76,9 +76,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (action === "update_status") {
-      const id = parseInt(String(args.ticket_id ?? ""), 10);
+      // Accepts a single ticket_id or ticket_ids (array / comma-separated) for bulk.
+      const rawIds = args.ticket_ids ?? args.ticket_id ?? "";
+      const ids = (Array.isArray(rawIds) ? rawIds : String(rawIds).split(","))
+        .map((x: any) => parseInt(String(x).trim(), 10))
+        .filter((n: number) => Number.isFinite(n) && n > 0);
       let status = String(args.status ?? "").trim().toLowerCase();
-      if (!id || !status) return res.status(400).json({ error: "ticket_id and status required" });
+      if (ids.length === 0 || !status) return res.status(400).json({ error: "ticket_id(s) and status required" });
       // Zendesk: 'closed' cannot be set directly (solved is terminal for agents),
       // and 'hold' is not enabled on this account — map both to supported states.
       let note = "";
@@ -87,11 +91,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!["open", "pending", "solved"].includes(status)) {
         return res.status(400).json({ error: "status must be open, pending, solved, or closed" });
       }
-      const out = await zdFetch(`/tickets/${id}.json`, {
+      if (ids.length === 1) {
+        const out = await zdFetch(`/tickets/${ids[0]}.json`, {
+          method: "PUT",
+          body: JSON.stringify({ ticket: { status } }),
+        });
+        return res.status(200).json({ ok: true, ticket: slim(out.ticket), message: `Ticket #${ids[0]} is now ${status}${note}` });
+      }
+      // Bulk: Zendesk processes update_many as an async job (completes in seconds).
+      await zdFetch(`/tickets/update_many.json?ids=${ids.join(",")}`, {
         method: "PUT",
         body: JSON.stringify({ ticket: { status } }),
       });
-      return res.status(200).json({ ok: true, ticket: slim(out.ticket), message: `Ticket #${id} is now ${status}${note}` });
+      return res.status(200).json({
+        ok: true,
+        count: ids.length,
+        message: `${ids.length} tickets (#${ids.join(", #")}) are being set to ${status}${note} — done within seconds`,
+      });
     }
 
     if (action === "search_tickets") {

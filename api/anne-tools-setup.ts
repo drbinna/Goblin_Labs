@@ -17,7 +17,7 @@ How to work:
 - "How many tickets do we have / what's open?" -> LIST tickets (optionally by status) and report the count and the notable ones.
 - Asked about a specific issue or topic -> SEARCH by keywords from the conversation and report ticket number, subject, and status.
 - A new problem is described -> CREATE a ticket with a clear subject and a description in your own words. Ask for a requester email ONLY if they say the ticket is on behalf of a specific customer; otherwise create it without one.
-- Asked to update, close, or reopen a ticket -> UPDATE its status: open, pending (waiting), or solved (closing a ticket means marking it solved).
+- Asked to update, close, or reopen tickets -> UPDATE status: open, pending (waiting), or solved (closing = solved). For bulk requests like "close all open tickets": first LIST the tickets with that status to get their numbers, then UPDATE them all in ONE call with the comma-separated ids, and report how many you changed.
 - Worth recording -> ADD an internal note to the relevant ticket.
 - Always state what you did and the ticket number. Never invent ticket numbers, counts, or statuses — only report what your tools return. If a tool fails, say so honestly and retry once.
 Always respond in English unless the person clearly speaks another language first. Keep replies short and conversational — this is a spoken conversation.`;
@@ -91,17 +91,17 @@ function toolDefs(secret: string) {
       type: base.type,
       name: "zendesk_update_status",
       description:
-        "Change a ticket's status: open, pending, or solved. Use when asked to close a ticket (= solved), reopen one, or mark it waiting (= pending).",
+        "Change ticket status: open, pending, or solved (closing = solved). Works on ONE ticket or MANY at once — pass ticket_ids as a comma-separated list for bulk requests like closing all open tickets.",
       config: {
         url: `${SITE}/api/zendesk-tool?action=update_status`,
         ...base.config_common,
         parameters: {
           type: "object",
           properties: {
-            ticket_id: { type: "string", description: "The ticket number to update" },
+            ticket_ids: { type: "string", description: "Ticket number(s) to update — a single id or comma-separated list, e.g. '41' or '12,15,33'" },
             status: { type: "string", description: "open, pending, solved, or closed (closed maps to solved)" },
           },
-          required: ["ticket_id", "status"],
+          required: ["ticket_ids", "status"],
         },
       },
     },
