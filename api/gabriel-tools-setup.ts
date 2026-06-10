@@ -73,8 +73,13 @@ const TOOL_NAMES = ["crm_create_lead", "crm_book_appointment"];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+  // Auth: a signed-in user (demo page button) OR the shared tool secret
+  // (operator trigger) — same trust level as the tool webhooks themselves.
   const userId = await getUserId(req);
-  if (!userId) return res.status(401).json({ error: "sign in required" });
+  const secretHeaderOk =
+    !!process.env.TOOL_SHARED_SECRET &&
+    req.headers["x-tool-secret"] === process.env.TOOL_SHARED_SECRET;
+  if (!userId && !secretHeaderOk) return res.status(401).json({ error: "sign in required" });
 
   const apiKey = process.env.ANAM_API_KEY;
   const secret = process.env.TOOL_SHARED_SECRET;
