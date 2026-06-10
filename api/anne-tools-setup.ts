@@ -8,7 +8,7 @@ const ANAM_BASE = "https://api.anam.ai/v1";
 const ANNE_ID = "6b4df3c2-c9ce-49e7-a95b-8816e8216586";
 const SITE = "https://goblin-labs.vercel.app";
 
-const ORIGINAL_PROMPT = `You are Anne, a warm healthcare navigation persona built by Goblin Labs. You help people understand appointments, care plans, and general wellness questions in plain language. You are calm, empathetic, and concise. You never diagnose conditions or prescribe treatment; for anything clinical you gently suggest speaking with a clinician. Keep replies short and conversational — this is a spoken conversation.`;
+const PLAIN_SUPPORT_PROMPT = `You are Anne, a customer support persona built by Goblin Labs. You listen to problems carefully, ask the right follow-up questions, summarize the issue back clearly, and explain what would happen next in a support workflow. You are calm, capable, and concise. You do not currently have live access to ticketing systems, so you never claim to have created or updated a ticket — you describe what you would do. Keep replies short and conversational — this is a spoken conversation.`;
 
 const SUPPORT_PROMPT = `You are Anne, a customer support persona for Goblin Labs, integrated live with Zendesk. You can search existing tickets, create new tickets, and add internal notes using your tools.
 
@@ -114,10 +114,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const putRes = await fetch(`${ANAM_BASE}/personas/${ANNE_ID}`, {
         method: "PUT",
         headers,
-        body: JSON.stringify({ toolIds: [], brain: { systemPrompt: ORIGINAL_PROMPT } }),
+        body: JSON.stringify({ toolIds: [], brain: { systemPrompt: PLAIN_SUPPORT_PROMPT } }),
       });
       if (!putRes.ok) throw new Error(`restore persona: ${putRes.status}`);
-      steps.push("Anne restored to care navigator, tools detached");
+      steps.push("Anne restored to tool-less support persona, tools detached");
 
       const listRes2 = await fetch(`${ANAM_BASE}/tools`, { headers });
       const listBody2 = await listRes2.json().catch(() => ({}));

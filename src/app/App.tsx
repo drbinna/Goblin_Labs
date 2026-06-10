@@ -62,12 +62,12 @@ const fadeUp = (delay = 0) => ({
 const DEPLOYED_PERSONAS = [
   {
     name: "Anne",
-    role: "Care navigator",
-    voice: "gentle, reassuring",
+    role: "Support",
+    voice: "calm, capable",
     portrait: "https://lab.anam.ai/persona_thumbnails/anne_home.png",
     body:
-      "Helps people make sense of appointments, care plans, and wellness questions in plain language — calm, empathetic, and careful never to play doctor. Built for the healthcare vertical.",
-    stack: ["Healthcare", "Real-time avatar", "Empathetic voice"],
+      "Front-line support that does the work, not just the talking — she hears the problem, opens the ticket, checks on existing ones, and leaves the notes your team actually needs. Patient with people, precise with systems.",
+    stack: ["Customer support", "Real-time avatar", "Works your helpdesk"],
     href: "/p/6b4df3c2-c9ce-49e7-a95b-8816e8216586",
     cta: "Talk to Anne",
     note: null,
