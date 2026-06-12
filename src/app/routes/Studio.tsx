@@ -262,22 +262,16 @@ export default function Studio() {
   }
 
   async function deploy() {
-    // Deploying ties a persona to an account; require sign-in. Preserve the
-    // in-progress config across the login redirect so nothing is lost.
-    if (authLoaded && !isSignedIn) {
-      try {
-        localStorage.setItem("studio-draft", JSON.stringify({ name, verticalTitle: vertical.title, avatarId, voiceId }));
-      } catch {}
-      navigate("/login?redirect=/studio");
-      return;
-    }
+    // Launch mode: no sign-in required. Anyone can deploy and gets a share
+    // link immediately. Ownership is recorded only when a session exists.
     setDeploying(true);
     try {
       // Usually already resolved from the preview pre-warm; otherwise creates now.
       const { id } = await ensurePersona(config);
       setDeployId(id);
-      // Record ownership so it appears under /personas (best-effort).
+      // Record ownership so it appears under /personas (best-effort, signed-in only).
       try {
+        if (!isSignedIn) throw new Error("anonymous");
         const token = await getToken();
         await fetch("/api/personas-mine", {
           method: "POST",
@@ -343,8 +337,8 @@ export default function Studio() {
                 <UserButton />
               </>
             ) : (
-              <Link to="/login?redirect=/studio" className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground">
-                Sign in
+              <Link to="/docs" className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground">
+                Docs
               </Link>
             )}
           </div>

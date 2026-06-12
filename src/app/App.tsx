@@ -8,7 +8,7 @@ import founderPortrait from "@/imports/founder-portrait.jpg";
 
 const NAV = [
   { label: "Home", href: "#top" },
-  { label: "Personas", href: "#personas" },
+  { label: "Docs", href: "/docs" },
   { label: "Studio", href: "/studio" },
 ];
 

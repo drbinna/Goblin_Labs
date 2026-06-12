@@ -16,6 +16,7 @@ const Studio = lazy(() => import("./app/routes/Studio.tsx"));
 const Talk = lazy(() => import("./app/routes/Talk.tsx"));
 const Login = lazy(() => import("./app/routes/Login.tsx"));
 const Personas = lazy(() => import("./app/routes/Personas.tsx"));
+const Docs = lazy(() => import("./app/routes/Docs.tsx"));
 const SupportDemo = lazy(() => import("./app/routes/SupportDemo.tsx"));
 const LeadGenDemo = lazy(() => import("./app/routes/LeadGenDemo.tsx"));
 
@@ -61,6 +62,14 @@ createRoot(document.getElementById("root")!).render(
           element={
             <Suspense fallback={null}>
               <SupportDemo />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/docs"
+          element={
+            <Suspense fallback={null}>
+              <Docs />
             </Suspense>
           }
         />
