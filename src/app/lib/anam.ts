@@ -46,6 +46,36 @@ export async function createPersona(config: PersonaConfig): Promise<{ id: string
   return data;
 }
 
+export type BatchCreateResult = { ok: boolean; id?: string; name?: string; error?: string };
+
+// Create up to 20 personas in one request. Results come back in submission
+// order; check each item's `ok` — a 207 means some succeeded and some failed.
+export async function createPersonas(configs: PersonaConfig[]): Promise<BatchCreateResult[]> {
+  const res = await fetch("/api/personas", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ batch: configs }),
+  });
+  const text = await res.text();
+  if (!res.ok && res.status !== 207) {
+    throw new Error(`batch create ${res.status}: ${text.slice(0, 300)}`);
+  }
+  const data = JSON.parse(text);
+  return data.results ?? [];
+}
+
+// Record ownership for a set of freshly created personas in one call.
+export async function savePersonasMine(
+  personas: { anamPersonaId: string; name: string; vertical?: string }[],
+): Promise<void> {
+  const res = await fetch("/api/personas-mine", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ personas }),
+  });
+  if (!res.ok) throw new Error(`save ownership failed: ${res.status}`);
+}
+
 export type Voice = {
   id: string;
   name: string;
@@ -178,7 +208,14 @@ export async function startTalk(
   let token: string;
   try {
     token = await fetchSessionToken({ personaConfig: { personaId } as unknown as PersonaConfig });
-  } catch {
+  } catch (e) {
+    // Fallback keeps the link alive, but it is a degraded session: the
+    // ephemeral config carries no attached tools (CRM writes, ticket filing).
+    // Surface it so a "wrong persona behavior" report is diagnosable.
+    console.warn(
+      `[anam] stateful mint failed for persona ${personaId}; falling back to ephemeral config — attached tools will be UNAVAILABLE this session`,
+      e,
+    );
     token = await fetchSessionToken({ personaConfig: fallbackConfig });
   }
   const t1 = performance.now();
@@ -219,18 +256,37 @@ export async function startPreview(
 export type DeployedPersona = { id: string; name: string; config: PersonaConfig };
 
 export async function getPersona(id: string): Promise<DeployedPersona | null> {
-  const res = await fetch(`/api/personas?id=${encodeURIComponent(id)}`);
+  // no-store: a persona link must always reflect the persona as it exists now,
+  // never a cached body that could belong to an older (or wrong) revision.
+  const res = await fetch(`/api/personas?id=${encodeURIComponent(id)}`, {
+    cache: "no-store",
+  });
   if (!res.ok) return null;
   const p = await res.json().catch(() => null);
   if (!p || !p.id) return null;
+  // Identity checks — fail loudly rather than render the wrong persona:
+  // 1) the upstream record must be the one this link asked for;
+  if (p.id !== id) {
+    console.error(`[anam] persona id mismatch: link asked for ${id}, upstream returned ${p.id}`);
+    return null;
+  }
+  // 2) face and voice define the persona's identity; if either is missing we
+  //    refuse to silently substitute a default (that is how a link ends up
+  //    showing the wrong persona). Only the LLM id may fall back.
+  const avatarId = p.avatar?.id;
+  const voiceId = p.voice?.id;
+  if (!avatarId || !voiceId) {
+    console.error(`[anam] persona ${id} is missing ${!avatarId ? "avatar" : "voice"}; refusing to render with defaults`);
+    return null;
+  }
   return {
     id: p.id,
     name: p.name ?? "Persona",
     config: {
       name: p.name ?? "Persona",
       // GET /personas/:id returns avatar/voice as objects and the prompt under `brain`.
-      avatarId: p.avatar?.id ?? DEFAULT_AVATAR_ID,
-      voiceId: p.voice?.id ?? DEFAULT_VOICE_ID,
+      avatarId,
+      voiceId,
       llmId: p.llmId ?? DEFAULT_LLM_ID,
       avatarModel: p.avatarModel ?? p.avatar?.model ?? DEFAULT_AVATAR_MODEL,
       systemPrompt: p.brain?.systemPrompt ?? "You are a helpful, embodied AI persona.",

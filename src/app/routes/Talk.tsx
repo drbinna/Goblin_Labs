@@ -21,13 +21,20 @@ export default function Talk() {
 
   const name = persona?.name ?? "Persona";
 
-  // Resolve the persona (name + config) up front so "Start" is instant.
+  // Resolve the persona (name + config) up front so "Start" is instant — and
+  // so a bad link fails visibly here instead of rendering the wrong persona.
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
     getPersona(id)
       .then((p) => {
-        if (!cancelled && p) setPersona(p);
+        if (cancelled) return;
+        if (p) {
+          setPersona(p);
+        } else {
+          setErr("This persona link is invalid, or the persona was changed or deleted. Ask for a fresh link.");
+          setPhase("error");
+        }
       })
       .catch(() => {});
     return () => {

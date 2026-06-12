@@ -23,23 +23,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === "POST") {
-      const { anamPersonaId, name, vertical } = (req.body ?? {}) as {
+      const body = (req.body ?? {}) as {
         anamPersonaId?: string;
         name?: string;
         vertical?: string;
+        personas?: { anamPersonaId?: string; name?: string; vertical?: string }[];
       };
-      if (!anamPersonaId || !name) {
-        return res.status(400).json({ error: "anamPersonaId and name required" });
+      // Accept either a single record (back-compat) or { personas: [...] }.
+      const items = Array.isArray(body.personas)
+        ? body.personas
+        : body.anamPersonaId
+          ? [body]
+          : [];
+      if (items.length === 0 || items.length > 50) {
+        return res.status(400).json({
+          error: "provide anamPersonaId+name, or personas: [1-50 records]",
+        });
       }
-      await col.updateOne(
-        { userId, anamPersonaId },
-        {
-          $set: { name, vertical: vertical ?? null },
-          $setOnInsert: { userId, anamPersonaId, createdAt: new Date() },
-        },
-        { upsert: true },
+      const invalid = items.find((p) => !p.anamPersonaId || !p.name);
+      if (invalid) {
+        return res.status(400).json({ error: "every record needs anamPersonaId and name" });
+      }
+      const now = new Date();
+      await col.bulkWrite(
+        items.map((p) => ({
+          updateOne: {
+            filter: { userId, anamPersonaId: p.anamPersonaId },
+            update: {
+              $set: { name: p.name, vertical: p.vertical ?? null },
+              $setOnInsert: { userId, anamPersonaId: p.anamPersonaId, createdAt: now },
+            },
+            upsert: true,
+          },
+        })),
       );
-      return res.status(200).json({ ok: true });
+      return res.status(200).json({ ok: true, saved: items.length });
     }
 
     return res.status(405).json({ error: "GET or POST only" });
