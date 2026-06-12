@@ -7,6 +7,9 @@ import { Link, useSearchParams } from "react-router";
 const appearance = {
   variables: {
     colorPrimary: "#fafafa",
+    // Text rendered ON the white primary button — without this Clerk picks
+    // white-on-white ("CONTINUE" was invisible).
+    colorTextOnPrimaryBackground: "#0a0a0a",
     colorBackground: "#0a0a0a",
     colorInputBackground: "#111111",
     colorInputText: "#fafafa",
@@ -21,10 +24,16 @@ const appearance = {
     card: "bg-transparent shadow-none border-0 p-0 w-full",
     headerTitle: "text-foreground",
     headerSubtitle: "text-muted-foreground",
+    // Dark buttons carry white text. Clerk styles the inner text/arrow nodes
+    // directly, so target them too (with !important to beat Clerk's CSS).
     socialButtonsBlockButton:
-      "border border-border/60 bg-background text-foreground hover:bg-foreground/5",
+      "border border-border/60 bg-background !text-[#fafafa] hover:bg-foreground/5",
+    socialButtonsBlockButtonText: "!text-[#fafafa]",
+    socialButtonsBlockButtonArrow: "!text-[#fafafa]",
+    // White primary button carries dark text.
     formButtonPrimary:
-      "bg-foreground text-background hover:bg-foreground/90 text-[12px] font-semibold uppercase tracking-[0.14em]",
+      "bg-foreground !text-[#0a0a0a] hover:bg-foreground/90 text-[12px] font-semibold uppercase tracking-[0.14em]",
+    buttonArrowIcon: "!text-[#0a0a0a]",
     footerActionLink: "text-foreground hover:text-foreground/80",
     formFieldInput: "border-border/60",
   },
