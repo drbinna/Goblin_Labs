@@ -5,6 +5,7 @@
     }
   },
   "rewrites": [
+    { "source": "/api/leads", "destination": "/api/lead-capture" },
     { "source": "/((?!api/).*)", "destination": "/" }
   ]
 }

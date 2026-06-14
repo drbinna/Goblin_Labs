@@ -8,6 +8,9 @@
 //
 // Mongo is the system of record (survives Anam's 30-day window, holds partial
 // and anonymous leads). Notion is a downstream, best-effort CRM view.
+//
+// GET /api/lead-capture (and /api/leads via rewrite) → operator read view:
+// funnel summary + recent leads.
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { leadsCollection, type Lead, type LeadUtm } from "./_leads.js";
 import { createNotionLead } from "./_notion.js";
@@ -32,8 +35,96 @@ function cleanUtm(u: unknown): LeadUtm | undefined {
 const str = (v: unknown, max = 300) =>
   typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined;
 
+// ---- GET (operator read view) ---------------------------------------------
+// Served at /api/leads via a vercel.json rewrite. Lives here rather than in its
+// own api/leads.ts because this project hits a deploy-time serverless-function
+// ceiling at 16 functions; folding read+write into one keeps us under it.
+async function readLeads(req: VercelRequest, res: VercelResponse) {
+  const q = req.query;
+  const one = (v: unknown) => (Array.isArray(v) ? v[0] : v);
+  const limit = Math.min(Math.max(parseInt(String(one(q.limit) ?? "50"), 10) || 50, 1), 200);
+  const persona = typeof one(q.persona) === "string" && one(q.persona) ? String(one(q.persona)) : undefined;
+  const status = typeof one(q.status) === "string" && one(q.status) ? String(one(q.status)) : undefined;
+  const withEmail = String(one(q.withEmail) ?? "") === "true";
+  const sinceRaw = typeof one(q.since) === "string" ? String(one(q.since)) : undefined;
+  const since = sinceRaw ? new Date(sinceRaw) : undefined;
+  const sinceValid = since && !Number.isNaN(since.getTime()) ? since : undefined;
+
+  // Scope = persona/time window the funnel is computed over.
+  const scope: Record<string, any> = {};
+  if (persona) scope.personaId = persona;
+  if (sinceValid) scope.lastSeenAt = { $gte: sinceValid };
+
+  // Filter = scope plus the narrowing the list view applies.
+  const filter: Record<string, any> = { ...scope };
+  if (status) filter.status = status;
+  if (withEmail) filter.emailValid = true;
+
+  try {
+    const coll = await leadsCollection();
+
+    const [total, withValidEmail, contactCaptured, byStatusAgg, byPersonaAgg, items] =
+      await Promise.all([
+        coll.countDocuments(scope),
+        coll.countDocuments({ ...scope, emailValid: true }),
+        coll.countDocuments({ ...scope, status: "contact_captured" }),
+        coll.aggregate([{ $match: scope }, { $group: { _id: "$status", n: { $sum: 1 } } }]).toArray(),
+        coll
+          .aggregate([
+            { $match: scope },
+            {
+              $group: {
+                _id: "$personaId",
+                leads: { $sum: 1 },
+                withEmail: { $sum: { $cond: [{ $eq: ["$emailValid", true] }, 1, 0] } },
+              },
+            },
+            { $sort: { leads: -1 } },
+            { $limit: 25 },
+          ])
+          .toArray(),
+        coll.find(filter).sort({ lastSeenAt: -1 }).limit(limit).toArray(),
+      ]);
+
+    const leads = (items as any[]).map((l) => ({
+      visitorId: l.visitorId,
+      personaId: l.personaId ?? null,
+      name: l.name ?? null,
+      email: l.email ?? null,
+      company: l.company ?? null,
+      status: l.status,
+      emailValid: !!l.emailValid,
+      referrer: l.referrer ?? null,
+      utm: l.utm ?? null,
+      firstSeenAt: l.firstSeenAt,
+      lastSeenAt: l.lastSeenAt,
+      capturedAt: l.capturedAt ?? null,
+    }));
+
+    return res.status(200).json({
+      ok: true,
+      summary: {
+        total,
+        contactCaptured,
+        withValidEmail,
+        byStatus: Object.fromEntries((byStatusAgg as any[]).map((s) => [s._id ?? "unknown", s.n])),
+        byPersona: (byPersonaAgg as any[]).map((p) => ({
+          personaId: p._id ?? null,
+          leads: p.leads,
+          withEmail: p.withEmail,
+        })),
+      },
+      count: leads.length,
+      leads,
+    });
+  } catch (e: any) {
+    return res.status(500).json({ error: e?.message ?? String(e) });
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
+  if (req.method === "GET") return readLeads(req, res);
+  if (req.method !== "POST") return res.status(405).json({ error: "GET or POST" });
 
   const body = (req.body ?? {}) as Record<string, any>;
   const visitorId = str(body.visitorId, 100);
