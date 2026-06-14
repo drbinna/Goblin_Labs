@@ -16,6 +16,43 @@ export const DEFAULT_VOICE_ID = "6bfbe25a-979d-40f3-a92b-5394170af54b";
 // can be a slower-to-initialize / early-access model. cara-3 is GA + low-latency.
 export const DEFAULT_AVATAR_MODEL = "cara-3";
 
+// Personas that should drive the on-screen lead-capture form. For these, the
+// session mint gets an inline `prefill_contact` client tool plus form-fill
+// instructions appended to the prompt, so the avatar fills the form by voice.
+// Anam honors inline tool definitions on persona-referenced AND ephemeral mints
+// (verified against the live API), so this needs no pre-created tool, no Anam
+// key here, and no mutation of the stored persona. Gabriel is not a stored Anam
+// persona anyway — his session is minted from a rebuilt config — so attaching
+// tools to a persona record was never an option for him.
+export const LEAD_GEN_PERSONA_IDS = new Set<string>([
+  "e6db066d-80f1-49c6-96e9-a9c10af18397", // Gabriel — Lead Gen (homepage CTA)
+]);
+
+// Inline client-tool definition Anam attaches at session-mint time. The browser
+// handler that receives the call is registered in streamToken() via onPrefill.
+const PREFILL_TOOL = {
+  type: "client",
+  name: "prefill_contact",
+  description:
+    "Fill the on-screen contact form (top-right of the visitor's screen) with details the visitor has shared, so they can confirm by tapping Send instead of you reading their email back aloud. Call as soon as you have any of name, email, or company — one field at a time — and again whenever a value changes.",
+  parameters: {
+    type: "object",
+    properties: {
+      name: { type: "string", description: "The visitor's name, if given" },
+      email: { type: "string", description: "The visitor's email address, as you understood it" },
+      company: { type: "string", description: "Their company or organization, if mentioned" },
+    },
+    required: [],
+  },
+  awaitResult: true,
+} as const;
+
+// Appended to a lead-gen persona's prompt so the avatar fills the form live,
+// one field at a time, and draws the visitor's eye to it — the demo moment.
+const FILL_ADDENDUM = `
+
+There is a short contact form at the TOP-RIGHT of the visitor's screen — name, email, company, and a Send button. As you learn each detail, call prefill_contact IMMEDIATELY with just that one field, ONE AT A TIME (name first, then email, then company), so the visitor watches the form fill itself in live as you speak. The first time you fill something, draw their eye to it: "watch the top-right — I'll fill this in for you as we talk." NEVER spell an email back out loud — say "I've popped that into the form at the top right, give it a check and tap Send." Spoken emails get mis-heard; the form does not.`;
+
 export async function fetchSessionToken(input: {
   personaId?: string;
   personaConfig?: PersonaConfig;
@@ -240,19 +277,34 @@ export async function startTalk(
   onPrefill?: (args: PrefillArgs) => void,
 ): Promise<SessionHandle & { timings: SessionTimings }> {
   const t0 = performance.now();
+  // Lead-gen personas get the prefill_contact client tool attached inline at
+  // mint time, plus the form-fill instructions appended to their prompt. Inline
+  // tools are honored on both the persona-referenced mint and the ephemeral
+  // fallback, so the avatar can fill the form with no pre-created tool and no
+  // change to the stored persona.
+  const leadGen = LEAD_GEN_PERSONA_IDS.has(personaId);
+  const extra = leadGen
+    ? { systemPrompt: `${fallbackConfig.systemPrompt}${FILL_ADDENDUM}`, tools: [PREFILL_TOOL] }
+    : {};
   let token: string;
   try {
-    token = await fetchSessionToken({ personaConfig: { personaId } as unknown as PersonaConfig, clientLabel });
+    token = await fetchSessionToken({
+      personaConfig: { personaId, ...extra } as unknown as PersonaConfig,
+      clientLabel,
+    });
   } catch (e) {
-    // Fallback keeps the link alive, but it is a degraded session: the
-    // ephemeral config carries no attached tools (CRM writes, ticket filing,
-    // and the prefill_contact form helper). Surface it so a "wrong persona
-    // behavior" report is diagnosable.
+    // Fallback keeps the link alive. With inline tools it is no longer a
+    // tool-less session: the prefill helper rides along on the ephemeral config
+    // too. Surface the failure so a "wrong persona behavior" report stays
+    // diagnosable.
     console.warn(
-      `[anam] stateful mint failed for persona ${personaId}; falling back to ephemeral config — attached tools will be UNAVAILABLE this session`,
+      `[anam] stateful mint failed for persona ${personaId}; falling back to ephemeral config`,
       e,
     );
-    token = await fetchSessionToken({ personaConfig: fallbackConfig, clientLabel });
+    token = await fetchSessionToken({
+      personaConfig: { ...fallbackConfig, ...extra } as unknown as PersonaConfig,
+      clientLabel,
+    });
   }
   const t1 = performance.now();
   const handle = await streamToken(videoEl, token, { onPrefill });
