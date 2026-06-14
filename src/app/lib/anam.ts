@@ -34,7 +34,7 @@ const PREFILL_TOOL = {
   type: "client",
   name: "prefill_contact",
   description:
-    "Fill the on-screen contact form (top-right of the visitor's screen) with details the visitor has shared, so they can confirm by tapping Send instead of you reading their email back aloud. Call as soon as you have any of name, email, or company — one field at a time — and again whenever a value changes.",
+    "Fill the on-screen contact form (shown next to the video on the visitor's screen) with details the visitor has shared, so they can confirm by tapping Send instead of you reading their email back aloud. Call as soon as you have any of name, email, or company, one field at a time, and again whenever a value changes.",
   parameters: {
     type: "object",
     properties: {
@@ -51,7 +51,7 @@ const PREFILL_TOOL = {
 // one field at a time, and draws the visitor's eye to it — the demo moment.
 const FILL_ADDENDUM = `
 
-There is a short contact form at the TOP-RIGHT of the visitor's screen — name, email, company, and a Send button. As you learn each detail, call prefill_contact IMMEDIATELY with just that one field, ONE AT A TIME (name first, then email, then company), so the visitor watches the form fill itself in live as you speak. The first time you fill something, draw their eye to it: "watch the top-right — I'll fill this in for you as we talk." NEVER spell an email back out loud — say "I've popped that into the form at the top right, give it a check and tap Send." Spoken emails get mis-heard; the form does not.`;
+There is a short contact form on the visitor's screen, right by the video (name, email, company, and a Send button). As you learn each detail, call prefill_contact right away with just that one field, ONE AT A TIME (name first, then email, then company), so the visitor watches the form fill itself in live as you speak. The first time you fill something, draw their eye to it by telling them to keep an eye on the form next to the video while you fill it in. NEVER spell an email back out loud. Instead, tell them you have popped it into the form by the video and ask them to check it and tap Send. Spoken emails get mis-heard; the form does not.`;
 
 // Gabriel's base prompt. The form-fill behavior is layered on via FILL_ADDENDUM
 // at mint time, so this stays focused on who he is.

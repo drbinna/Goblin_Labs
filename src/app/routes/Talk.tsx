@@ -108,7 +108,7 @@ export default function Talk() {
   }
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-background text-foreground">
+    <div className="relative flex min-h-[100dvh] w-full flex-col overflow-x-hidden bg-background text-foreground">
       {/* Header */}
       <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-5 py-4 sm:px-8">
         <Link to="/" className="text-[14px] font-semibold tracking-tight">
@@ -120,7 +120,7 @@ export default function Talk() {
       </header>
 
       {/* Stage */}
-      <main className="flex min-h-screen items-center justify-center px-4 py-20">
+      <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 pt-24 pb-20">
         <div className="relative aspect-[3/4] w-full max-w-[460px] overflow-hidden rounded-3xl border border-border/60 bg-black shadow-2xl">
           <video
             ref={videoRef}
@@ -201,21 +201,21 @@ export default function Talk() {
             </div>
           )}
         </div>
-      </main>
 
-      {/* Lead capture — fixed to the top-right so it stays put over the stage,
-          and so Gabriel can reliably tell visitors "the form at the top right".
-          Rendered across idle/live/ended (only hidden on hard error) so the
-          textbox is available before, during, and after the call — and stays
-          mounted so typed input and Gabriel's prefill survive the call ending. */}
-      {phase !== "error" && (
-        <LeadCard
-          personaId={id}
-          personaName={name}
-          prefill={prefill}
-          className="absolute right-3 top-16 z-30 w-[min(86vw,300px)] shadow-xl sm:right-5"
-        />
-      )}
+        {/* Lead capture. On mobile it sits in normal flow directly below the
+            stage, so it never covers the avatar's face; on large screens it
+            floats at the top-right of the stage. Rendered across
+            idle/live/ended (only hidden on hard error) and kept mounted so
+            typed input and the prefill survive the call ending. */}
+        {phase !== "error" && (
+          <LeadCard
+            personaId={id}
+            personaName={name}
+            prefill={prefill}
+            className="w-full max-w-[440px] shadow-xl lg:absolute lg:right-5 lg:top-20 lg:z-30 lg:w-[300px] lg:max-w-none"
+          />
+        )}
+      </main>
 
       <footer className="absolute inset-x-0 bottom-0 z-10 px-5 py-4 text-center text-[11px] text-muted-foreground">
         Built with Goblin Labs · real-time AI personas

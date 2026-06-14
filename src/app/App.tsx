@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
-import { ArrowRight, ArrowUpRight, Github, Twitter, Linkedin } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Github, Twitter, Linkedin, Menu, X } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import heroShadow from "@/imports/hero-shadow.webp";
 import goblinLogo from "@/imports/ChatGPT_Image_May_15__2026__02_03_01_AM.png";
@@ -171,6 +171,7 @@ function Logo({ size = "md" }: { size?: "sm" | "md" }) {
 }
 
 export default function App() {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <div id="top" className="min-h-screen w-full bg-background text-foreground">
       {/* Navbar */}
@@ -197,15 +198,45 @@ export default function App() {
             })}
           </nav>
           <div className="flex items-center gap-2">
-            <GlassIcon label="Twitter"><Twitter className="h-4 w-4" /></GlassIcon>
-            <GlassIcon label="LinkedIn"><Linkedin className="h-4 w-4" /></GlassIcon>
-            <GlassIcon label="GitHub"><Github className="h-4 w-4" /></GlassIcon>
+            <div className="hidden items-center gap-2 sm:flex">
+              <GlassIcon label="Twitter"><Twitter className="h-4 w-4" /></GlassIcon>
+              <GlassIcon label="LinkedIn"><Linkedin className="h-4 w-4" /></GlassIcon>
+              <GlassIcon label="GitHub"><Github className="h-4 w-4" /></GlassIcon>
+            </div>
+            <button
+              type="button"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((o) => !o)}
+              className="liquid-glass flex h-10 w-10 items-center justify-center rounded-full text-foreground/80 md:hidden"
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu */}
+        {menuOpen && (
+          <div className="border-t border-border/40 bg-background/95 px-4 pb-4 pt-2 backdrop-blur-xl md:hidden">
+            <nav className="flex flex-col">
+              {NAV.map((n) => (
+                <a
+                  key={n.label}
+                  href={n.href}
+                  onClick={() => setMenuOpen(false)}
+                  onTouchStart={n.href === "/studio" ? prefetchStudio : undefined}
+                  className="rounded-lg px-3 py-3 text-[15px] text-foreground/80 transition-colors hover:bg-foreground/5 hover:text-foreground"
+                >
+                  {n.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Hero */}
-      <section className="relative min-h-screen overflow-hidden">
+      <section className="relative min-h-[100dvh] overflow-hidden">
         <div
           className="absolute inset-0 hero-shadow"
           style={{ backgroundImage: `url(${heroShadow})` }}
@@ -213,7 +244,7 @@ export default function App() {
         <div className="pointer-events-none absolute inset-0 bg-background/30" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-background to-transparent" />
 
-        <div className="relative z-10 mx-auto flex min-h-screen max-w-[1100px] flex-col items-center justify-center px-6 pb-12 pt-28 text-center sm:pt-36 md:px-10 md:pt-56">
+        <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-[1100px] flex-col items-center justify-center px-6 pb-12 pt-28 text-center sm:pt-36 md:px-10 md:pt-56">
           <motion.div {...fadeUp(0)} className="mb-8">
             <a
               href="https://www.producthunt.com/products/goblin-labs-ai-personas?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-goblin-labs-ai-personas"
