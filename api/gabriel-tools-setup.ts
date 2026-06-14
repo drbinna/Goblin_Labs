@@ -6,7 +6,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getUserId } from "./_auth.js";
 
 const ANAM_BASE = "https://api.anam.ai/v1";
-const GABRIEL_ID = "b62e6dbb-cee3-4787-9c6b-9a2ea5e2d557";
+const GABRIEL_ID = "e6db066d-80f1-49c6-96e9-a9c10af18397"; // live "Gabriel — Lead Gen" (homepage CTA + real sessions); the old b62e6dbb scratch persona was deleted from Anam
 const SITE = "https://goblin-labs.vercel.app";
 const LLM_ID = "a7cf662c-2ace-4de1-a21e-ef0fbf144bb7"; // GPT-4o-mini — PUT replaces brain wholesale, so always resend
 
