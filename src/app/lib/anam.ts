@@ -53,6 +53,28 @@ const FILL_ADDENDUM = `
 
 There is a short contact form at the TOP-RIGHT of the visitor's screen — name, email, company, and a Send button. As you learn each detail, call prefill_contact IMMEDIATELY with just that one field, ONE AT A TIME (name first, then email, then company), so the visitor watches the form fill itself in live as you speak. The first time you fill something, draw their eye to it: "watch the top-right — I'll fill this in for you as we talk." NEVER spell an email back out loud — say "I've popped that into the form at the top right, give it a check and tap Send." Spoken emails get mis-heard; the form does not.`;
 
+// Gabriel's base prompt. The form-fill behavior is layered on via FILL_ADDENDUM
+// at mint time, so this stays focused on who he is.
+const GABRIEL_PROMPT = `You are Gabriel, a lead-generation persona for Goblin Labs. You have natural, concise spoken conversations with prospects: understand what they need, learn their name, email, and company, and offer to set up a meeting with the team. You are warm, sharp, and never pushy. Always respond in English unless the person clearly speaks another language first. Keep replies short and conversational.`;
+
+// Virtual personas: defined in code, NOT stored in Anam. Stored Gabriel records
+// keep getting wiped by the open personas API during launch traffic (b62e6dbb,
+// then e6db066d). Resolving Gabriel from this map — and minting his session
+// ephemerally from it — means there is no Anam persona record that can vanish,
+// so the homepage demo can't break that way again. Avatar/voice are the stable
+// platform defaults, which are always valid.
+export const VIRTUAL_PERSONAS: Record<string, PersonaConfig> = {
+  "e6db066d-80f1-49c6-96e9-a9c10af18397": {
+    name: "Gabriel — Lead Gen",
+    avatarId: DEFAULT_AVATAR_ID,
+    voiceId: DEFAULT_VOICE_ID,
+    llmId: DEFAULT_LLM_ID,
+    avatarModel: DEFAULT_AVATAR_MODEL,
+    systemPrompt: GABRIEL_PROMPT,
+  },
+};
+
+
 export async function fetchSessionToken(input: {
   personaId?: string;
   personaConfig?: PersonaConfig;
@@ -278,33 +300,37 @@ export async function startTalk(
 ): Promise<SessionHandle & { timings: SessionTimings }> {
   const t0 = performance.now();
   // Lead-gen personas get the prefill_contact client tool attached inline at
-  // mint time, plus the form-fill instructions appended to their prompt. Inline
-  // tools are honored on both the persona-referenced mint and the ephemeral
-  // fallback, so the avatar can fill the form with no pre-created tool and no
-  // change to the stored persona.
+  // mint time, plus the form-fill instructions appended to their prompt.
   const leadGen = LEAD_GEN_PERSONA_IDS.has(personaId);
   const extra = leadGen
     ? { systemPrompt: `${fallbackConfig.systemPrompt}${FILL_ADDENDUM}`, tools: [PREFILL_TOOL] }
     : {};
+  // Virtual personas have no stored Anam record to reference, so mint straight
+  // from the rebuilt config. Real personas mint by reference first (which loads
+  // any tools attached to the stored record) and fall back to ephemeral.
+  const virtual = personaId in VIRTUAL_PERSONAS;
   let token: string;
-  try {
-    token = await fetchSessionToken({
-      personaConfig: { personaId, ...extra } as unknown as PersonaConfig,
-      clientLabel,
-    });
-  } catch (e) {
-    // Fallback keeps the link alive. With inline tools it is no longer a
-    // tool-less session: the prefill helper rides along on the ephemeral config
-    // too. Surface the failure so a "wrong persona behavior" report stays
-    // diagnosable.
-    console.warn(
-      `[anam] stateful mint failed for persona ${personaId}; falling back to ephemeral config`,
-      e,
-    );
+  if (virtual) {
     token = await fetchSessionToken({
       personaConfig: { ...fallbackConfig, ...extra } as unknown as PersonaConfig,
       clientLabel,
     });
+  } else {
+    try {
+      token = await fetchSessionToken({
+        personaConfig: { personaId, ...extra } as unknown as PersonaConfig,
+        clientLabel,
+      });
+    } catch (e) {
+      console.warn(
+        `[anam] stateful mint failed for persona ${personaId}; falling back to ephemeral config`,
+        e,
+      );
+      token = await fetchSessionToken({
+        personaConfig: { ...fallbackConfig, ...extra } as unknown as PersonaConfig,
+        clientLabel,
+      });
+    }
   }
   const t1 = performance.now();
   const handle = await streamToken(videoEl, token, { onPrefill });
@@ -344,6 +370,12 @@ export async function startPreview(
 export type DeployedPersona = { id: string; name: string; config: PersonaConfig };
 
 export async function getPersona(id: string): Promise<DeployedPersona | null> {
+  // Virtual personas (e.g. Gabriel) are defined in code, not stored in Anam, so
+  // they always resolve — no fetch that could 404 if the record was wiped.
+  const virtual = VIRTUAL_PERSONAS[id];
+  if (virtual) {
+    return { id, name: virtual.name, config: virtual };
+  }
   // no-store: a persona link must always reflect the persona as it exists now,
   // never a cached body that could belong to an older (or wrong) revision.
   const res = await fetch(`/api/personas?id=${encodeURIComponent(id)}`, {

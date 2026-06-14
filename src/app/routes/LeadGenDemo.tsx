@@ -3,16 +3,19 @@ import { Link } from "react-router";
 import { useAuth, UserButton } from "@clerk/clerk-react";
 import { createClient, AnamEvent } from "@anam-ai/js-sdk";
 import { Loader2, PhoneOff, Sparkles, Wrench, Check, Trash2 } from "lucide-react";
+import { VIRTUAL_PERSONAS } from "@/app/lib/anam";
 
 const GABRIEL_ID = "e6db066d-80f1-49c6-96e9-a9c10af18397";
 
 type ToolEvent = { id: string; name: string; status: "running" | "done" | "failed"; ms?: number; at: number };
 async function fetchSessionTokenForGabriel(): Promise<string> {
-  // Stateful persona: tools attached to Anne load automatically.
+  // Gabriel is a virtual (code-defined) persona — mint from his config so this
+  // never depends on a stored Anam record that could be wiped.
+  const cfg = VIRTUAL_PERSONAS[GABRIEL_ID];
   const res = await fetch("/api/session-token", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ personaConfig: { personaId: GABRIEL_ID } }),
+    body: JSON.stringify({ personaConfig: cfg ?? { personaId: GABRIEL_ID } }),
   });
   if (!res.ok) throw new Error(`session token failed: ${res.status}`);
   const data = await res.json();
