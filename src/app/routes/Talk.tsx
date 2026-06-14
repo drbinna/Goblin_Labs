@@ -204,8 +204,11 @@ export default function Talk() {
       </main>
 
       {/* Lead capture — fixed to the top-right so it stays put over the stage,
-          and so Gabriel can reliably tell visitors "the form at the top right". */}
-      {phase === "live" && (
+          and so Gabriel can reliably tell visitors "the form at the top right".
+          Rendered across idle/live/ended (only hidden on hard error) so the
+          textbox is available before, during, and after the call — and stays
+          mounted so typed input and Gabriel's prefill survive the call ending. */}
+      {phase !== "error" && (
         <LeadCard
           personaId={id}
           personaName={name}
