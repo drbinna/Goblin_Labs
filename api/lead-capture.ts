@@ -14,6 +14,10 @@ import { createNotionLead } from "./_notion";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Leads are stored in Mongo (the system of record). Notion mirroring is off for
+// now — flip to true to start promoting valid-email leads into the CRM again.
+const SYNC_TO_NOTION = false;
+
 function cleanUtm(u: unknown): LeadUtm | undefined {
   if (!u || typeof u !== "object") return undefined;
   const src = u as Record<string, unknown>;
@@ -93,9 +97,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const lead = (updated && (updated as any).value !== undefined ? (updated as any).value : updated) as Lead | null;
 
-      // Promote to Notion once, only when we have a real email.
+      // Promote to Notion once, only when we have a real email — disabled for
+      // now (SYNC_TO_NOTION=false); leads live in Mongo only.
       let syncedToNotion = lead?.syncedToNotion ?? false;
-      if (emailValid && lead && !lead.syncedToNotion) {
+      if (SYNC_TO_NOTION && emailValid && lead && !lead.syncedToNotion) {
         try {
           const title = lead.name || company || email!.split("@")[0] || "Website lead";
           const pageId = await createNotionLead({
