@@ -80,7 +80,7 @@ const DEPLOYED_PERSONAS = [
     body:
       "Talks to prospects like a person, not a form. He learns what they need, captures the lead into the CRM mid-conversation, and books the meeting before the call ends — name, email, need, time, done.",
     stack: ["Sales", "Real-time avatar", "CRM + calendar"],
-    href: "/p/b62e6dbb-cee3-4787-9c6b-9a2ea5e2d557",
+    href: "/p/e6db066d-80f1-49c6-96e9-a9c10af18397",
     cta: "Talk to Gabriel",
     note: null,
   },

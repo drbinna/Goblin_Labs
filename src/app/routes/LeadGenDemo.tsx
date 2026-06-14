@@ -4,7 +4,7 @@ import { useAuth, UserButton } from "@clerk/clerk-react";
 import { createClient, AnamEvent } from "@anam-ai/js-sdk";
 import { Loader2, PhoneOff, Sparkles, Wrench, Check, Trash2 } from "lucide-react";
 
-const GABRIEL_ID = "b62e6dbb-cee3-4787-9c6b-9a2ea5e2d557";
+const GABRIEL_ID = "e6db066d-80f1-49c6-96e9-a9c10af18397";
 
 type ToolEvent = { id: string; name: string; status: "running" | "done" | "failed"; ms?: number; at: number };
 async function fetchSessionTokenForGabriel(): Promise<string> {
