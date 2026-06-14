@@ -8,16 +8,48 @@ const json = (status: number, body: unknown) =>
     headers: { "content-type": "application/json" },
   });
 
+// Constant-time string compare so the token check can't be timing-attacked.
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// GET is public (Talk pages, demos, link verification all read personas).
+// Every mutating method requires the shared write token, supplied either as
+// `x-goblin-write-token: <token>` or `authorization: Bearer <token>`.
+// Without PERSONAS_WRITE_TOKEN set in the environment, writes are refused
+// outright rather than silently left open.
+function isAuthorizedWrite(req: Request): boolean {
+  const expected = process.env.PERSONAS_WRITE_TOKEN;
+  if (!expected) return false;
+  const header =
+    req.headers.get("x-goblin-write-token") ??
+    (req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "");
+  return header.length > 0 && safeEqual(header, expected);
+}
+
 export default async function handler(req: Request): Promise<Response> {
   const apiKey = process.env.ANAM_API_KEY;
   if (!apiKey) return json(500, { error: "ANAM_API_KEY not set" });
+
+  const method = req.method.toUpperCase();
+  // POST (create) stays public so the sign-in-free Studio keeps working — the
+  // browser can't safely hold a token anyway. The destructive operations on
+  // EXISTING personas (overwrite / delete), which is how the demo personas got
+  // wiped during launch, require the shared write token.
+  const isProtected = method === "PUT" || method === "PATCH" || method === "DELETE";
+  if (isProtected && !isAuthorizedWrite(req)) {
+    return json(401, { error: "unauthorized: modifying or deleting a persona requires a valid write token" });
+  }
 
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
 
   // Batch create: POST { batch: [personaConfig, ...] } -> per-item results.
   // Single-object POST bodies behave exactly as before.
-  if (req.method === "POST" && !id) {
+  if (method === "POST" && !id) {
     const bodyText = await req.text();
     let parsed: unknown = null;
     try {
@@ -44,8 +76,8 @@ export default async function handler(req: Request): Promise<Response> {
     ? `${ANAM_BASE}/personas/${encodeURIComponent(id)}`
     : `${ANAM_BASE}/personas`;
   const body =
-    req.method !== "GET" && req.method !== "DELETE" ? await req.text() : undefined;
-  return proxy(target, req.method, body, apiKey);
+    method !== "GET" && method !== "DELETE" ? await req.text() : undefined;
+  return proxy(target, method, body, apiKey);
 }
 
 async function proxy(
