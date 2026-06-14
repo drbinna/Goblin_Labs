@@ -9,7 +9,7 @@ type Prefill = { name?: string; email?: string; company?: string };
 
 /**
  * Reliable, typed lead capture that runs alongside the voice conversation.
- * The email is typed and validated here — it never has to be spoken back and
+ * The email is typed and validated here, so it never has to be spoken back and
  * re-transcribed, which is what broke capture in the live sessions.
  *
  * `prefill` is the hook for avatar-assisted capture: once a CLIENT tool is
@@ -103,7 +103,7 @@ export default function LeadCard({
         company: company.trim() || undefined,
       });
       setSent(true);
-      toast.success("Got it — thanks! We'll be in touch.");
+      toast.success("Thanks! We'll be in touch.");
     } catch {
       setError("Couldn't save that. Mind trying again?");
       toast.error("Couldn't save that. Mind trying again?");
@@ -124,8 +124,8 @@ export default function LeadCard({
           You&apos;re on the list
         </div>
         <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-          Thanks{name ? `, ${name.split(" ")[0]}` : ""} — Obi will follow up at{" "}
-          <span className="text-foreground">{email.trim()}</span>. Keep chatting with{" "}
+          Thanks{name ? `, ${name.split(" ")[0]}` : ""}. Obi will follow up at{" "}
+          <span className="text-foreground">{email.trim()}</span>. You can keep chatting with{" "}
           {personaName ?? "the persona"} if you like.
         </p>
       </div>
@@ -156,7 +156,7 @@ export default function LeadCard({
         )}
       </div>
       <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
-        Drop your email and {personaName ?? "we"} will follow up — no need to spell it out loud.
+        We will follow up if you leave your email here.
       </p>
 
       <div className="mt-4 flex flex-col gap-2.5">
@@ -201,7 +201,7 @@ export default function LeadCard({
       {error && <p className="mt-3 text-[12px] text-destructive">{error}</p>}
       {!error && email.trim() && !emailOk && (
         <p className="mt-3 text-[12px] text-muted-foreground">
-          That email looks off — we&apos;ll still save it, but double-check it if you want a reply.
+          That email looks off. We&apos;ll still save it, but double-check it if you want a reply.
         </p>
       )}
 
