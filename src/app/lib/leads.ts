@@ -58,7 +58,7 @@ export function captureVisit(personaId: string): void {
   }
 }
 
-export type ContactFields = { name?: string; email: string; company?: string; need?: string };
+export type ContactFields = { name?: string; email?: string; company?: string; need?: string };
 
 // Submit typed contact details. Throws on failure so the UI can show an error.
 export async function captureContact(

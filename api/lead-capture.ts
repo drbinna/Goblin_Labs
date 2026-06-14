@@ -82,7 +82,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const updated = await coll.findOneAndUpdate(
         { visitorId },
         {
-          $setOnInsert: { visitorId, firstSeenAt: now, status: emailValid ? "contact_captured" : "visited" },
+          // status lives in $set when emailValid; only seed it on insert
+          // otherwise, so the same path is never in both operators (Mongo
+          // rejects that, which is what made valid submissions fail).
+          $setOnInsert: { visitorId, firstSeenAt: now, ...(emailValid ? {} : { status: "visited" as const }) },
           $set: set,
         },
         { upsert: true, returnDocument: "after" },

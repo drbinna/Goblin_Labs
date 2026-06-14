@@ -47,15 +47,16 @@ export default function LeadCard({
   }, [prefill, sent]);
 
   const emailOk = EMAIL_RE.test(email.trim());
+  const hasAnything = !!(name.trim() || email.trim() || company.trim());
 
   async function submit() {
-    if (!emailOk || sending) return;
+    if (sending || !hasAnything) return;
     setSending(true);
     setError(null);
     try {
       await captureContact(personaId, {
         name: name.trim() || undefined,
-        email: email.trim(),
+        email: email.trim() || undefined,
         company: company.trim() || undefined,
       });
       setSent(true);
@@ -141,23 +142,26 @@ export default function LeadCard({
         />
       </div>
 
-      {error && (
-        <p className="mt-3 text-[12px] text-destructive">{error}</p>
+      {error && <p className="mt-3 text-[12px] text-destructive">{error}</p>}
+      {!error && email.trim() && !emailOk && (
+        <p className="mt-3 text-[12px] text-muted-foreground">
+          That email looks off — we&apos;ll still save it, but double-check it if you want a reply.
+        </p>
       )}
 
       <button
         onClick={() => {
           if (sending) return;
-          if (!emailOk) {
-            setError("Add a valid email so we can reach you.");
+          if (!hasAnything) {
+            setError("Add your email (or name) first.");
             return;
           }
           submit();
         }}
         disabled={sending}
-        aria-disabled={!emailOk}
+        aria-disabled={!hasAnything}
         className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] transition-all ${
-          emailOk && !sending
+          hasAnything && !sending
             ? "cursor-pointer bg-foreground text-background shadow-sm hover:opacity-90"
             : sending
               ? "cursor-wait bg-foreground text-background opacity-80"
