@@ -120,7 +120,7 @@ export default function Talk() {
       </header>
 
       {/* Stage */}
-      <main className="flex min-h-screen flex-col items-center justify-center gap-5 px-4 py-20 lg:flex-row lg:items-center lg:gap-8">
+      <main className="flex min-h-screen items-center justify-center px-4 py-20">
         <div className="relative aspect-[3/4] w-full max-w-[460px] overflow-hidden rounded-3xl border border-border/60 bg-black shadow-2xl">
           <video
             ref={videoRef}
@@ -201,16 +201,18 @@ export default function Talk() {
             </div>
           )}
         </div>
-
-        {phase === "live" && (
-          <LeadCard
-            personaId={id}
-            personaName={name}
-            prefill={prefill}
-            className="w-full max-w-[460px] lg:w-[320px]"
-          />
-        )}
       </main>
+
+      {/* Lead capture — fixed to the top-right so it stays put over the stage,
+          and so Gabriel can reliably tell visitors "the form at the top right". */}
+      {phase === "live" && (
+        <LeadCard
+          personaId={id}
+          personaName={name}
+          prefill={prefill}
+          className="absolute right-3 top-16 z-30 w-[min(86vw,300px)] shadow-xl sm:right-5"
+        />
+      )}
 
       <footer className="absolute inset-x-0 bottom-0 z-10 px-5 py-4 text-center text-[11px] text-muted-foreground">
         Built with Goblin Labs · real-time AI personas

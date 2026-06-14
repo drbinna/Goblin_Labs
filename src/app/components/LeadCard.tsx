@@ -119,6 +119,7 @@ export default function LeadCard({
           value={email}
           onChange={(e) => {
             touched.current.email = true;
+            setError(null);
             setEmail(e.target.value);
           }}
           type="email"
@@ -145,9 +146,23 @@ export default function LeadCard({
       )}
 
       <button
-        onClick={submit}
-        disabled={!emailOk || sending}
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-foreground px-6 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-background disabled:opacity-40"
+        onClick={() => {
+          if (sending) return;
+          if (!emailOk) {
+            setError("Add a valid email so we can reach you.");
+            return;
+          }
+          submit();
+        }}
+        disabled={sending}
+        aria-disabled={!emailOk}
+        className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] transition-all ${
+          emailOk && !sending
+            ? "cursor-pointer bg-foreground text-background shadow-sm hover:opacity-90"
+            : sending
+              ? "cursor-wait bg-foreground text-background opacity-80"
+              : "cursor-pointer bg-muted text-muted-foreground hover:bg-muted/80"
+        }`}
       >
         {sending ? (
           <Loader2 className="h-4 w-4 animate-spin" />
