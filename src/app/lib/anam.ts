@@ -66,8 +66,13 @@ const GABRIEL_PROMPT = `You are Gabriel, a lead-generation persona for Goblin La
 export const VIRTUAL_PERSONAS: Record<string, PersonaConfig> = {
   "e6db066d-80f1-49c6-96e9-a9c10af18397": {
     name: "Gabriel — Lead Gen",
-    avatarId: DEFAULT_AVATAR_ID,
-    voiceId: DEFAULT_VOICE_ID,
+    // Gabriel's own avatar in the account (not the platform default). The wiped
+    // persona record pointed at this; we hardcode it so his face survives.
+    avatarId: "6cc28442-cccd-42a8-b6e4-24b7210a09c5", // "Gabriel"
+    // Original voice was lost with the record; Cooper (Friendly Mate, male) fits
+    // his approachable lead-gen tone. Swap to taste: Archie 91b4ce0f…, Corey
+    // 91a47e5a…, Laurent 8e67ed57… are the other male voices.
+    voiceId: "90c1fb05-4fc0-11f1-84b0-52bacf74fa75", // Cooper — Friendly Mate
     llmId: DEFAULT_LLM_ID,
     avatarModel: DEFAULT_AVATAR_MODEL,
     systemPrompt: GABRIEL_PROMPT,
