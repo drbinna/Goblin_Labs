@@ -1,9 +1,6 @@
 // GET /api/leads — operator view of captured leads (read-only, Mongo).
 //
-// Auth: a signed-in Clerk user OR the shared tool secret (x-tool-secret).
-// Optionally restrict to specific operators by setting LEADS_ADMIN_USER_IDS to
-// a comma-separated list of Clerk user ids; when set, only those users (or the
-// secret) may read. Returns lead PII, so keep the allowlist in mind.
+// Open endpoint — no auth, matching the rest of the app.
 //
 // Query params (all optional):
 //   limit     number  1..200 (default 50)
@@ -12,23 +9,10 @@
 //   withEmail "true"   only leads with a valid email
 //   since     ISO date only leads seen on/after this time
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getUserId } from "./_auth.js";
 import { leadsCollection } from "./_leads";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "GET only" });
-
-  // ---- auth ----------------------------------------------------------------
-  const userId = await getUserId(req);
-  const secretOk =
-    !!process.env.TOOL_SHARED_SECRET &&
-    req.headers["x-tool-secret"] === process.env.TOOL_SHARED_SECRET;
-  const adminIds = (process.env.LEADS_ADMIN_USER_IDS ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const userOk = !!userId && (adminIds.length === 0 || adminIds.includes(userId));
-  if (!userOk && !secretOk) return res.status(401).json({ error: "unauthorized" });
 
   // ---- params --------------------------------------------------------------
   const q = req.query;
