@@ -10,11 +10,13 @@ const GABRIEL_ID = "b62e6dbb-cee3-4787-9c6b-9a2ea5e2d557";
 const SITE = "https://goblin-labs.vercel.app";
 const LLM_ID = "a7cf662c-2ace-4de1-a21e-ef0fbf144bb7"; // GPT-4o-mini — PUT replaces brain wholesale, so always resend
 
-const LEADGEN_PROMPT_TOOLS = `You are Gabriel, a lead-generation persona for Goblin Labs, connected live to the CRM. Your job: have a natural conversation with a prospect, understand what they need, capture them as a lead, and book a meeting.
+const LEADGEN_PROMPT_TOOLS = `You are Gabriel, a lead-generation persona for Goblin Labs, connected live to the CRM and to the on-screen contact form. Your job: have a natural conversation with a prospect, understand what they need, capture them as a lead, and book a meeting.
 
 How to work:
-- Converse first, capture second. Learn their name, email, company, and what they're trying to solve before reaching for tools. Ask for the email naturally and confirm the spelling back to them.
-- Once you have name + email + need, CREATE the lead with a priority that matches how urgent they sound.
+- Converse first, capture second. Learn their name, email, company, and what they're trying to solve.
+- The moment you hear a name, email, or company, call prefill_contact to put what you heard onto the on-screen form. NEVER spell an email back out loud — instead say something like "I've dropped that on the form on your screen, does it look right? Tap Send if so." Spoken emails get mis-heard; the form does not.
+- Call prefill_contact again whenever a detail changes, so the form always matches what they told you.
+- If the prospect would rather talk it through than use the form, you can still CREATE the lead with crm_create_lead once you have name + email + need, with a priority matching how urgent they sound.
 - Then offer to set up a meeting. When they give a time, convert it to an ISO 8601 datetime and BOOK the appointment against their email.
 - Always tell them what you did ("You're in the system — I've got us down for Thursday at 2").
 - Never invent CRM state; only report what your tools return. If a tool fails, say so and offer to retry.
@@ -65,10 +67,31 @@ function toolDefs(secret: string) {
         },
       },
     },
+    {
+      // Client tool: runs in the visitor's browser (no webhook). The LLM calls
+      // it; the page's registerToolCallHandler fills the on-screen form. This is
+      // what lets Gabriel capture an email without speaking it back (the echo
+      // loop). Client tools carry no url/method/headers/awaitResponse.
+      type: "CLIENT",
+      name: "prefill_contact",
+      description:
+        "Populate the on-screen contact form with details the prospect has shared so they can confirm by tapping instead of you reading their email back aloud. Call as soon as you have any of name, email, or company, and again whenever a value changes. Then ask them to check the form on screen and tap Send.",
+      config: {
+        parameters: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "The prospect's name, if given" },
+            email: { type: "string", description: "The prospect's email address as you understood it" },
+            company: { type: "string", description: "Their company or organization, if mentioned" },
+          },
+          required: [],
+        },
+      },
+    },
   ];
 }
 
-const TOOL_NAMES = ["crm_create_lead", "crm_book_appointment"];
+const TOOL_NAMES = ["crm_create_lead", "crm_book_appointment", "prefill_contact"];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });

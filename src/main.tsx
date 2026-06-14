@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { ClerkProvider } from "@clerk/clerk-react";
 import App from "./app/App.tsx";
+import { Toaster } from "./app/components/ui/sonner";
 import "./styles/index.css";
 
 // Publishable key is public by design (it ships in the bundle either way).
@@ -83,5 +84,6 @@ createRoot(document.getElementById("root")!).render(
         />
       </Routes>
     </BrowserRouter>
+    <Toaster />
   </ClerkProvider>,
 );

@@ -19,6 +19,9 @@ export const DEFAULT_AVATAR_MODEL = "cara-3";
 export async function fetchSessionToken(input: {
   personaId?: string;
   personaConfig?: PersonaConfig;
+  // Forwarded to Anam's token mint as the session's clientLabel — lets us map
+  // an Anam session (and its transcript) back to the visitor/lead that owns it.
+  clientLabel?: string;
 }): Promise<string> {
   const res = await fetch("/api/session-token", {
     method: "POST",
@@ -170,12 +173,42 @@ export type SessionHandle = {
   talk: (s: string) => Promise<void>;
 };
 
+// Arguments Gabriel passes to the prefill_contact client tool.
+export type PrefillArgs = { name?: string; email?: string; company?: string };
+type StreamOpts = { onPrefill?: (args: PrefillArgs) => void };
+
 // Shared streaming logic. Given a session token, attaches the Anam client to a
 // <video> element and resolves once the first frame plays.
-async function streamToken(videoEl: HTMLVideoElement, token: string): Promise<SessionHandle> {
+async function streamToken(
+  videoEl: HTMLVideoElement,
+  token: string,
+  opts: StreamOpts = {},
+): Promise<SessionHandle> {
   const client = createClient(token);
 
   if (!videoEl.id) videoEl.id = `anam-stage-${Math.random().toString(36).slice(2)}`;
+
+  // Client-side tool handler. The persona calls prefill_contact; we surface the
+  // arguments to the page so the on-screen form fills and the visitor confirms
+  // by tapping — no spoken email read-back, which is what triggered the echo
+  // loop. Must be registered before streamToVideoElement() or early calls are
+  // missed. Cast: registerToolCallHandler may be absent from older SDK types.
+  if (opts.onPrefill) {
+    try {
+      (client as any).registerToolCallHandler?.("prefill_contact", {
+        onStart: async (payload: any) => {
+          try {
+            opts.onPrefill!((payload?.arguments ?? {}) as PrefillArgs);
+          } catch {
+            /* never let a UI prefill break the session */
+          }
+          return "The contact form was pre-filled for the visitor to confirm.";
+        },
+      });
+    } catch (e) {
+      console.warn("[anam] could not register prefill_contact handler", e);
+    }
+  }
 
   const ready = new Promise<void>((resolve) => {
     client.addListener(AnamEvent.VIDEO_PLAY_STARTED, () => resolve());
@@ -203,23 +236,26 @@ export async function startTalk(
   videoEl: HTMLVideoElement,
   personaId: string,
   fallbackConfig: PersonaConfig,
+  clientLabel?: string,
+  onPrefill?: (args: PrefillArgs) => void,
 ): Promise<SessionHandle & { timings: SessionTimings }> {
   const t0 = performance.now();
   let token: string;
   try {
-    token = await fetchSessionToken({ personaConfig: { personaId } as unknown as PersonaConfig });
+    token = await fetchSessionToken({ personaConfig: { personaId } as unknown as PersonaConfig, clientLabel });
   } catch (e) {
     // Fallback keeps the link alive, but it is a degraded session: the
-    // ephemeral config carries no attached tools (CRM writes, ticket filing).
-    // Surface it so a "wrong persona behavior" report is diagnosable.
+    // ephemeral config carries no attached tools (CRM writes, ticket filing,
+    // and the prefill_contact form helper). Surface it so a "wrong persona
+    // behavior" report is diagnosable.
     console.warn(
       `[anam] stateful mint failed for persona ${personaId}; falling back to ephemeral config — attached tools will be UNAVAILABLE this session`,
       e,
     );
-    token = await fetchSessionToken({ personaConfig: fallbackConfig });
+    token = await fetchSessionToken({ personaConfig: fallbackConfig, clientLabel });
   }
   const t1 = performance.now();
-  const handle = await streamToken(videoEl, token);
+  const handle = await streamToken(videoEl, token, { onPrefill });
   const t2 = performance.now();
   const timings: SessionTimings = {
     tokenMs: Math.round(t1 - t0),

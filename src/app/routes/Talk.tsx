@@ -7,6 +7,8 @@ import {
   type SessionHandle,
   type DeployedPersona,
 } from "@/app/lib/anam";
+import { captureVisit, getVisitorId } from "@/app/lib/leads";
+import LeadCard from "@/app/components/LeadCard";
 
 type Phase = "idle" | "connecting" | "live" | "ended" | "error";
 
@@ -15,6 +17,10 @@ export default function Talk() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [err, setErr] = useState<string | null>(null);
   const [persona, setPersona] = useState<DeployedPersona | null>(null);
+  // Details Gabriel infers and pushes onto the form via the prefill_contact tool.
+  const [prefill, setPrefill] = useState<{ name?: string; email?: string; company?: string } | undefined>(
+    undefined,
+  );
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const handleRef = useRef<SessionHandle | null>(null);
@@ -42,6 +48,12 @@ export default function Talk() {
     };
   }, [id]);
 
+  // Log the landing immediately — before any click, so even a bounce during
+  // avatar warmup is captured as a sourced lead.
+  useEffect(() => {
+    if (id) captureVisit(id);
+  }, [id]);
+
   // Tear the session down on unmount.
   useEffect(() => {
     return () => {
@@ -61,7 +73,19 @@ export default function Talk() {
         if (p) setPersona(p);
       }
       if (!p) throw new Error("This persona could not be found.");
-      handleRef.current = await startTalk(videoRef.current, p.id, p.config);
+      handleRef.current = await startTalk(
+        videoRef.current,
+        p.id,
+        p.config,
+        getVisitorId(),
+        (args) =>
+          setPrefill((prev) => ({
+            ...prev,
+            ...(args.name ? { name: args.name } : {}),
+            ...(args.email ? { email: args.email } : {}),
+            ...(args.company ? { company: args.company } : {}),
+          })),
+      );
       setPhase("live");
     } catch (e: any) {
       setErr(e?.message ?? String(e));
@@ -96,7 +120,7 @@ export default function Talk() {
       </header>
 
       {/* Stage */}
-      <main className="flex min-h-screen items-center justify-center px-4 py-20">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-5 px-4 py-20 lg:flex-row lg:items-center lg:gap-8">
         <div className="relative aspect-[3/4] w-full max-w-[460px] overflow-hidden rounded-3xl border border-border/60 bg-black shadow-2xl">
           <video
             ref={videoRef}
@@ -177,6 +201,15 @@ export default function Talk() {
             </div>
           )}
         </div>
+
+        {phase === "live" && (
+          <LeadCard
+            personaId={id}
+            personaName={name}
+            prefill={prefill}
+            className="w-full max-w-[460px] lg:w-[320px]"
+          />
+        )}
       </main>
 
       <footer className="absolute inset-x-0 bottom-0 z-10 px-5 py-4 text-center text-[11px] text-muted-foreground">
