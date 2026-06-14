@@ -5,3 +5,6 @@ dist/
 .DS_Store
 *.mp4
 .vercel
+
+# Avatar idling clips shown on the landing page (static assets, intentionally tracked)
+!public/avatars/*.mp4

@@ -28,27 +28,33 @@ function prefetchStudio() {
   fetch("/api/voices").catch(() => {});
 }
 
-const VERTICALS = [
+const AVATAR_REEL = [
   {
-    code: "01",
-    title: "Healthcare",
+    code: "gabriel",
+    name: "Gabriel",
+    role: "Lead gen",
     body:
-      "Personas that triage, follow up, and accompany patients through long-running care plans, speaking the right language for the clinician and the patient.",
-    video: "https://res.cloudinary.com/dbd6v9ove/video/upload/v1778831288/WhatsApp_Video_2026-05-15_at_00.44.54_n0pzen.mp4",
+      "Warm and sharp. He works a prospect like a person and captures the lead into the CRM mid-conversation.",
+    video: "/avatars/gabriel.mp4",
+    poster: "https://lab.anam.ai/persona_thumbnails/gabriel_table.png",
   },
   {
-    code: "02",
-    title: "Education",
+    code: "mia",
+    name: "Mia",
+    role: "Lab concierge",
     body:
-      "Tutors that watch the work as it unfolds. They read the diagram, hear the question, and respond at the cadence of a real conversation.",
-    video: "https://res.cloudinary.com/dbd6v9ove/video/upload/v1778831908/WhatsApp_Video_2026-05-15_at_00.57.18_tg2ipw.mp4",
+      "The lab's front door. Ask her what Goblin Labs builds, or how the Persona Studio turns a brief into a face.",
+    video: "/avatars/mia.mp4",
+    poster: "https://lab.anam.ai/persona_thumbnails/mia_studio.png",
   },
   {
-    code: "03",
-    title: "Engineering",
+    code: "anne",
+    name: "Anne",
+    role: "Support",
     body:
-      "Pair-programming personas that read the diff, watch the test runner, and reason about the system you're actually building, not a generic snippet bot. They sit next to your IDE and stay in context across the whole session.",
-    video: "https://res.cloudinary.com/dbd6v9ove/video/upload/v1778834806/WhatsApp_Video_2026-05-15_at_01.45.22_w4akle.mp4",
+      "Calm and capable. She hears the problem, opens the ticket, and leaves the notes your team actually needs.",
+    video: "/avatars/anne.mp4",
+    poster: "https://lab.anam.ai/persona_thumbnails/anne_home.png",
   },
 ];
 
@@ -113,7 +119,7 @@ function GlassIcon({ children, label }: { children: ReactNode; label: string }) 
 // Defers a video until it nears the viewport: no src is attached (so no network
 // fetch or decode) until the card scrolls close, and playback pauses when it
 // leaves the screen. Keeps three autoplaying clips off the critical path.
-function InViewVideo({ src, className }: { src: string; className?: string }) {
+function InViewVideo({ src, className, poster }: { src: string; className?: string; poster?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [active, setActive] = useState(false);
 
@@ -139,6 +145,7 @@ function InViewVideo({ src, className }: { src: string; className?: string }) {
     <video
       ref={ref}
       src={active ? src : undefined}
+      poster={poster}
       autoPlay
       muted
       loop
@@ -304,46 +311,38 @@ export default function App() {
             {...fadeUp(0)}
             className="mx-auto max-w-3xl text-balance text-center text-[clamp(2rem,4.5vw,4rem)] font-medium tracking-[-0.025em]"
           >
-            Persona libraries, built for{" "}
-            <span className="font-serif-italic">specific</span> verticals
-            <span className="font-serif-italic font-normal">
-              {" "}that live on your screen.
-            </span>
+            Meet the avatars,{" "}
+            <span className="font-serif-italic">in motion.</span>
           </motion.h2>
           <motion.p
             {...fadeUp(0.2)}
             className="mx-auto mt-6 max-w-2xl text-center text-[16px] leading-relaxed text-muted-foreground"
           >
-            A generalist persona is a demo. A persona that knows the workflow,
-            the vocabulary, and the failure modes of a specific field is a tool.
-            We're starting with three.
+            Gabriel, Mia, and Anne, rendered live in the lab. The same faces you
+            talk to when you open a conversation, here on a loop.
           </motion.p>
 
           <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
-            {VERTICALS.map((v, i) => (
+            {AVATAR_REEL.map((v, i) => (
               <motion.div
                 key={v.code}
                 {...fadeUp(0.1 + i * 0.1)}
                 className="liquid-glass group flex flex-col rounded-2xl p-7"
               >
-                <div className="flex items-center justify-end text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                  <span>{v.role}</span>
                   <ArrowUpRight className="h-4 w-4 opacity-50 transition-opacity group-hover:opacity-100" />
                 </div>
                 <div className="mt-4 aspect-[4/5] w-full overflow-hidden rounded-xl bg-foreground/[0.03]">
-                  {v.video ? (
-                    <InViewVideo
-                      key={v.video}
-                      src={v.video}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                      Persona recording · soon
-                    </div>
-                  )}
+                  <InViewVideo
+                    key={v.video}
+                    src={v.video}
+                    poster={v.poster}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
                 <div className="mt-6 text-[1.5rem] font-medium tracking-tight">
-                  {v.title}
+                  {v.name}
                 </div>
                 <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
                   {v.body}
