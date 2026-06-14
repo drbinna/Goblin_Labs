@@ -39,15 +39,58 @@ export default function LeadCard({
   // stomped.
   const touched = useRef({ name: false, email: false, company: false });
 
+  // Fields Gabriel is actively "typing" into right now (drives the glow + badge).
+  const [filling, setFilling] = useState<{ name?: boolean; email?: boolean; company?: boolean }>({});
+  const timers = useRef<Record<string, ReturnType<typeof setInterval> | null>>({});
+  const setters = { name: setName, email: setEmail, company: setCompany } as const;
+
+  function stopFill(field: "name" | "email" | "company") {
+    const t = timers.current[field];
+    if (t) {
+      clearInterval(t);
+      timers.current[field] = null;
+    }
+  }
+
+  // Type `target` into a field character-by-character so the visitor watches
+  // the form fill itself live, instead of values teleporting in. This is the
+  // demo moment: Gabriel says a detail, the field fills as he speaks.
+  function typeInto(field: "name" | "email" | "company", target: string) {
+    stopFill(field);
+    setFilling((f) => ({ ...f, [field]: true }));
+    setters[field]("");
+    let i = 0;
+    timers.current[field] = setInterval(() => {
+      i += 1;
+      setters[field](target.slice(0, i));
+      if (i >= target.length) {
+        stopFill(field);
+        setFilling((f) => ({ ...f, [field]: false }));
+      }
+    }, 45);
+  }
+
+  // The visitor taking over a field cancels any in-flight animation there.
+  function takeOver(field: "name" | "email" | "company") {
+    touched.current[field] = true;
+    stopFill(field);
+    setFilling((f) => ({ ...f, [field]: false }));
+  }
+
   useEffect(() => {
     if (!prefill || sent) return;
-    if (!touched.current.name && prefill.name) setName(prefill.name);
-    if (!touched.current.email && prefill.email) setEmail(prefill.email);
-    if (!touched.current.company && prefill.company) setCompany(prefill.company);
+    if (!touched.current.name && prefill.name && prefill.name !== name) typeInto("name", prefill.name);
+    if (!touched.current.email && prefill.email && prefill.email !== email) typeInto("email", prefill.email);
+    if (!touched.current.company && prefill.company && prefill.company !== company) typeInto("company", prefill.company);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefill, sent]);
+
+  // Clear any running animation if the card unmounts mid-fill.
+  useEffect(() => () => Object.keys(timers.current).forEach((k) => stopFill(k as "name")), []);
 
   const emailOk = EMAIL_RE.test(email.trim());
   const hasAnything = !!(name.trim() || email.trim() || company.trim());
+  const anyFilling = !!(filling.name || filling.email || filling.company);
 
   async function submit() {
     if (sending || !hasAnything) return;
@@ -90,14 +133,27 @@ export default function LeadCard({
   }
 
   const inputCls =
-    "w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-[13px] outline-none transition-colors focus:border-foreground/40";
+    "w-full rounded-lg border border-border/60 bg-background px-3 py-2 text-[13px] outline-none transition-all focus:border-foreground/40";
+  // Glow applied to a field while Gabriel is typing into it.
+  const fillCls = "border-foreground/50 ring-2 ring-foreground/30 bg-foreground/[0.04]";
 
   return (
     <div
       className={`rounded-2xl border border-border/60 bg-background/80 p-5 backdrop-blur ${className}`}
     >
-      <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-        Leave your details
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          Leave your details
+        </div>
+        {anyFilling && (
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-foreground">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-foreground/60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-foreground" />
+            </span>
+            {(personaName ?? "Gabriel").split(" ")[0]} is filling this in…
+          </span>
+        )}
       </div>
       <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
         Drop your email and {personaName ?? "we"} will follow up — no need to spell it out loud.
@@ -105,21 +161,21 @@ export default function LeadCard({
 
       <div className="mt-4 flex flex-col gap-2.5">
         <input
-          className={inputCls}
+          className={`${inputCls} ${filling.name ? fillCls : ""}`}
           placeholder="Name (optional)"
           value={name}
           onChange={(e) => {
-            touched.current.name = true;
+            takeOver("name");
             setName(e.target.value);
           }}
           autoComplete="name"
         />
         <input
-          className={inputCls}
+          className={`${inputCls} ${filling.email ? fillCls : ""}`}
           placeholder="you@company.com"
           value={email}
           onChange={(e) => {
-            touched.current.email = true;
+            takeOver("email");
             setError(null);
             setEmail(e.target.value);
           }}
@@ -131,11 +187,11 @@ export default function LeadCard({
           }}
         />
         <input
-          className={inputCls}
+          className={`${inputCls} ${filling.company ? fillCls : ""}`}
           placeholder="Company (optional)"
           value={company}
           onChange={(e) => {
-            touched.current.company = true;
+            takeOver("company");
             setCompany(e.target.value);
           }}
           autoComplete="organization"
