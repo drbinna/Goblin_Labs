@@ -2,7 +2,7 @@
 // Runs on Vercel's Node runtime (the Mongo driver needs TCP). Reuses the
 // cached client from _rag so we don't open a second connection pool.
 import type { Collection, Document } from "mongodb";
-import { getClient } from "./_rag";
+import { getClient } from "./_rag.js";
 
 const DB_NAME = "goblinlabs";
 export const LEADS_COLLECTION = "leads";

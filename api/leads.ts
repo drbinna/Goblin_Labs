@@ -9,7 +9,7 @@
 //   withEmail "true"   only leads with a valid email
 //   since     ISO date only leads seen on/after this time
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { leadsCollection } from "./_leads";
+import { leadsCollection } from "./_leads.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET") return res.status(405).json({ error: "GET only" });

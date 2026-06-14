@@ -9,8 +9,8 @@
 // Mongo is the system of record (survives Anam's 30-day window, holds partial
 // and anonymous leads). Notion is a downstream, best-effort CRM view.
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { leadsCollection, type Lead, type LeadUtm } from "./_leads";
-import { createNotionLead } from "./_notion";
+import { leadsCollection, type Lead, type LeadUtm } from "./_leads.js";
+import { createNotionLead } from "./_notion.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
