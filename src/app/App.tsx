@@ -252,7 +252,10 @@ export default function App() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-background to-transparent" />
 
         <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-[1100px] flex-col items-center justify-center px-6 pb-12 pt-28 text-center sm:pt-36 md:px-10 md:pt-56">
-          <motion.div {...fadeUp(0)} className="mb-8">
+          <motion.div
+            {...fadeUp(0)}
+            className="mb-8 flex flex-wrap items-center justify-center gap-3"
+          >
             <a
               href="https://www.producthunt.com/products/goblin-labs-ai-personas?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-goblin-labs-ai-personas"
               target="_blank"
@@ -265,6 +268,61 @@ export default function App() {
                 height={54}
                 src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1166179&theme=light&t=1780903902092"
               />
+            </a>
+
+            {/* Hacker News — custom badge (HN has no official embed).
+                TODO: swap href to your exact Show HN item URL once it's live. */}
+            <a
+              href="https://news.ycombinator.com/from?site=usegoblin.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block"
+              aria-label="Just launched on Hacker News"
+            >
+              <svg
+                width={250}
+                height={54}
+                viewBox="0 0 250 54"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                role="img"
+                aria-label="Just launched on Hacker News"
+              >
+                <rect x="0.5" y="0.5" width="249" height="53" rx="10" fill="#FFFFFF" stroke="#D7D7D7" />
+                <rect x="11" y="9" width="36" height="36" rx="7" fill="#FF6600" />
+                <text
+                  x="29"
+                  y="38"
+                  textAnchor="middle"
+                  fontFamily="Verdana, Geneva, sans-serif"
+                  fontSize="30"
+                  fontWeight="700"
+                  fill="#FFFFFF"
+                >
+                  Y
+                </text>
+                <text
+                  x="59"
+                  y="22"
+                  fontFamily="Helvetica, Arial, sans-serif"
+                  fontSize="8.5"
+                  fontWeight="600"
+                  letterSpacing="1.6"
+                  fill="#6B6B6B"
+                >
+                  JUST LAUNCHED ON
+                </text>
+                <text
+                  x="58.5"
+                  y="41"
+                  fontFamily="Helvetica, Arial, sans-serif"
+                  fontSize="19"
+                  fontWeight="700"
+                  fill="#1F1E1B"
+                >
+                  Hacker News
+                </text>
+              </svg>
             </a>
           </motion.div>
 
