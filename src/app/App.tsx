@@ -28,6 +28,15 @@ function prefetchStudio() {
   fetch("/api/voices").catch(() => {});
 }
 
+// Talk-page links for each deployed persona — single source of truth shared by
+// the avatar reel cards and the "Personas already on the job" section below,
+// so the two can never drift apart.
+const TALK_LINKS: Record<string, string> = {
+  gabriel: "/p/e6db066d-80f1-49c6-96e9-a9c10af18397",
+  mia: "/p/77b7e33a-c096-4bb4-b70f-bdc988cf8925",
+  anne: "/p/6b4df3c2-c9ce-49e7-a95b-8816e8216586",
+};
+
 const AVATAR_REEL = [
   {
     code: "gabriel",
@@ -74,7 +83,7 @@ const DEPLOYED_PERSONAS = [
     body:
       "Front-line support that does the work, not just the talking — she hears the problem, opens the ticket, checks on existing ones, and leaves the notes your team actually needs. Patient with people, precise with systems.",
     stack: ["Customer support", "Real-time avatar", "Works your helpdesk"],
-    href: "/p/6b4df3c2-c9ce-49e7-a95b-8816e8216586",
+    href: TALK_LINKS.anne,
     cta: "Talk to Anne",
     note: null,
   },
@@ -86,7 +95,7 @@ const DEPLOYED_PERSONAS = [
     body:
       "Talks to prospects like a person, not a form. He learns what they need, captures the lead into the CRM mid-conversation, and books the meeting before the call ends — name, email, need, time, done.",
     stack: ["Sales", "Real-time avatar", "CRM + calendar"],
-    href: "/p/e6db066d-80f1-49c6-96e9-a9c10af18397",
+    href: TALK_LINKS.gabriel,
     cta: "Talk to Gabriel",
     note: null,
   },
@@ -98,7 +107,7 @@ const DEPLOYED_PERSONAS = [
     body:
       "The lab's own front door. Ask her what Goblin Labs does, how the Persona Studio works, or what it takes to deploy a persona of your own — she'll tell you, out loud.",
     stack: ["Concierge", "Real-time avatar", "Knows the lab"],
-    href: "/p/77b7e33a-c096-4bb4-b70f-bdc988cf8925",
+    href: TALK_LINKS.mia,
     cta: "Talk to Mia",
     note: null,
   },
@@ -382,10 +391,12 @@ export default function App() {
 
           <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-3">
             {AVATAR_REEL.map((v, i) => (
-              <motion.div
+              <motion.a
                 key={v.code}
+                href={TALK_LINKS[v.code]}
+                aria-label={`Talk to ${v.name}, ${v.role}`}
                 {...fadeUp(0.1 + i * 0.1)}
-                className="liquid-glass group flex flex-col rounded-2xl p-7"
+                className="liquid-glass group flex cursor-pointer flex-col rounded-2xl p-7 text-inherit no-underline transition-colors hover:bg-foreground/[0.02]"
               >
                 <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
                   <span>{v.role}</span>
@@ -405,7 +416,7 @@ export default function App() {
                 <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
                   {v.body}
                 </p>
-              </motion.div>
+              </motion.a>
             ))}
           </div>
         </div>
