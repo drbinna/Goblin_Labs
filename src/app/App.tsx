@@ -113,10 +113,12 @@ const DEPLOYED_PERSONAS = [
   },
 ];
 
-function GlassIcon({ children, label }: { children: ReactNode; label: string }) {
+function GlassIcon({ children, label, href = "#" }: { children: ReactNode; label: string; href?: string }) {
+  const external = href !== "#";
   return (
     <a
-      href="#"
+      href={href}
+      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       aria-label={label}
       className="liquid-glass flex h-10 w-10 items-center justify-center rounded-full text-foreground/80 transition-colors hover:text-foreground"
     >
@@ -215,8 +217,8 @@ export default function App() {
           </nav>
           <div className="flex items-center gap-2">
             <div className="hidden items-center gap-2 sm:flex">
-              <GlassIcon label="Twitter"><Twitter className="h-4 w-4" /></GlassIcon>
-              <GlassIcon label="LinkedIn"><Linkedin className="h-4 w-4" /></GlassIcon>
+              <GlassIcon label="X" href="https://x.com/UseGoblin"><Twitter className="h-4 w-4" /></GlassIcon>
+              <GlassIcon label="LinkedIn" href="https://www.linkedin.com/company/goblinlabs1/"><Linkedin className="h-4 w-4" /></GlassIcon>
               <GlassIcon label="GitHub"><Github className="h-4 w-4" /></GlassIcon>
             </div>
             <button
