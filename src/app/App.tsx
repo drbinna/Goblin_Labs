@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion } from "motion/react";
-import { ArrowRight, ArrowUpRight, Github, Twitter, Linkedin, Menu, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Twitter, Linkedin, Menu, X } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
 import heroShadow from "@/imports/hero-shadow.webp";
 import goblinLogo from "@/imports/ChatGPT_Image_May_15__2026__02_03_01_AM.png";
@@ -219,7 +219,6 @@ export default function App() {
             <div className="hidden items-center gap-2 sm:flex">
               <GlassIcon label="X" href="https://x.com/UseGoblin"><Twitter className="h-4 w-4" /></GlassIcon>
               <GlassIcon label="LinkedIn" href="https://www.linkedin.com/company/goblinlabs1/"><Linkedin className="h-4 w-4" /></GlassIcon>
-              <GlassIcon label="GitHub"><Github className="h-4 w-4" /></GlassIcon>
             </div>
             <button
               type="button"
