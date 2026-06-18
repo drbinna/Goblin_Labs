@@ -8,7 +8,6 @@ import {
   type DeployedPersona,
 } from "@/app/lib/anam";
 import { captureVisit, getVisitorId } from "@/app/lib/leads";
-import LeadCard from "@/app/components/LeadCard";
 
 type Phase = "idle" | "connecting" | "live" | "ended" | "error";
 
@@ -17,10 +16,6 @@ export default function Talk() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [err, setErr] = useState<string | null>(null);
   const [persona, setPersona] = useState<DeployedPersona | null>(null);
-  // Details Gabriel infers and pushes onto the form via the prefill_contact tool.
-  const [prefill, setPrefill] = useState<{ name?: string; email?: string; company?: string } | undefined>(
-    undefined,
-  );
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const handleRef = useRef<SessionHandle | null>(null);
@@ -78,13 +73,6 @@ export default function Talk() {
         p.id,
         p.config,
         getVisitorId(),
-        (args) =>
-          setPrefill((prev) => ({
-            ...prev,
-            ...(args.name ? { name: args.name } : {}),
-            ...(args.email ? { email: args.email } : {}),
-            ...(args.company ? { company: args.company } : {}),
-          })),
       );
       setPhase("live");
     } catch (e: any) {
@@ -201,20 +189,6 @@ export default function Talk() {
             </div>
           )}
         </div>
-
-        {/* Lead capture. On mobile it sits in normal flow directly below the
-            stage, so it never covers the avatar's face; on large screens it
-            floats at the top-right of the stage. Rendered across
-            idle/live/ended (only hidden on hard error) and kept mounted so
-            typed input and the prefill survive the call ending. */}
-        {phase !== "error" && (
-          <LeadCard
-            personaId={id}
-            personaName={name}
-            prefill={prefill}
-            className="w-full max-w-[440px] shadow-xl lg:absolute lg:right-5 lg:top-20 lg:z-30 lg:w-[300px] lg:max-w-none"
-          />
-        )}
       </main>
 
       <footer className="absolute inset-x-0 bottom-0 z-10 px-5 py-4 text-center text-[11px] text-muted-foreground">
