@@ -497,13 +497,13 @@ export default function App() {
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block"
-              aria-label="Just launched on Hacker News"
+              aria-label="Join the discussion on Hacker News"
             >
-              <svg width={210} height={45} viewBox="0 0 250 54" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Just launched on Hacker News">
+              <svg width={210} height={45} viewBox="0 0 250 54" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Join the discussion on Hacker News">
                 <rect x="0.5" y="0.5" width="249" height="53" rx="10" fill="#0B0B0B" stroke="#2A2A2A" />
                 <rect x="11" y="9" width="36" height="36" rx="7" fill="#FF6600" />
                 <text x="29" y="38" textAnchor="middle" fontFamily="Verdana, Geneva, sans-serif" fontSize="30" fontWeight="700" fill="#FFFFFF">Y</text>
-                <text x="59" y="22" fontFamily="Helvetica, Arial, sans-serif" fontSize="8.5" fontWeight="600" letterSpacing="1.6" fill="#8A8A8A">JUST LAUNCHED ON</text>
+                <text x="59" y="22" fontFamily="Helvetica, Arial, sans-serif" fontSize="8.5" fontWeight="600" letterSpacing="1.1" fill="#8A8A8A">JOIN THE DISCUSSION ON</text>
                 <text x="58.5" y="41" fontFamily="Helvetica, Arial, sans-serif" fontSize="19" fontWeight="700" fill="#F5F4F0">Hacker News</text>
               </svg>
             </a>
