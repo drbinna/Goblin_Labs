@@ -31,6 +31,20 @@ export default defineConfig({
     },
   },
 
+  // The api/ folder holds Vercel serverless functions, which plain `vite`
+  // can't execute — locally a fetch to /api/* returns the raw TS source.
+  // Proxy those calls to the production deployment so the Studio works in
+  // dev. NOTE: local Studio actions therefore hit PROD data. Run
+  // `vercel dev` instead when the functions need to be truly local.
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://www.usegoblin.xyz',
+        changeOrigin: true,
+      },
+    },
+  },
+
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })
