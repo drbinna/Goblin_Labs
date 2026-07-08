@@ -214,3 +214,24 @@
 @media (prefers-reduced-motion: reduce) {
   .hero-shadow { animation: none; transform: scale(1.08); }
 }
+
+/* Capability ticker under the hero: content is rendered twice, so a -50%
+   translate loops seamlessly. Edges fade out via mask so pills don't clip. */
+.ticker-mask {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.animate-marquee {
+  animation: marquee 36s linear infinite;
+}
+.animate-marquee-reverse {
+  animation: marquee 36s linear infinite reverse;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-marquee-reverse { animation: none; }
+}
