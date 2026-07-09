@@ -123,7 +123,7 @@ export default function LeadGenDemo() {
           <video ref={videoRef} id="gabriel-demo-stage" autoPlay playsInline className="absolute inset-0 h-full w-full object-cover" />
           {phase !== "live" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/70 px-6 text-center backdrop-blur-sm">
-              <div className="text-[1.5rem] font-medium tracking-tight">Gabriel — Lead Gen</div>
+              <div className="text-[1.5rem] font-medium tracking-tight">Gabriel · Lead Gen</div>
               {phase === "connecting" ? (
                 <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" /> Connecting…
@@ -136,7 +136,7 @@ export default function LeadGenDemo() {
               ) : (
                 <>
                   <p className="max-w-[300px] text-[13px] leading-relaxed text-muted-foreground">
-                    Play a prospect: tell him what you need, give him your details, agree on a meeting time — and watch the lead land in Notion.
+                    Play a prospect: tell him what you need, give him your details, agree on a meeting time, then watch the lead land in Notion.
                   </p>
                   <button onClick={start} className="inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-background">
                     <Sparkles className="h-4 w-4" /> Start conversation
@@ -183,7 +183,7 @@ export default function LeadGenDemo() {
             <section className="rounded-2xl border border-dashed border-border/60 p-4">
               <h2 className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">One-time wiring</h2>
               <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                Wire up before recording; tear down after. Keep the Notion leads database open in another tab — rows land there live.
+                Wire up before recording; tear down after. Keep the Notion leads database open in another tab and you'll see rows land there live.
               </p>
               <button onClick={() => runSetup(false)} disabled={settingUp} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2 text-[12px] hover:bg-foreground/5 disabled:opacity-50">
                 {settingUp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wrench className="h-3.5 w-3.5" />} Wire up Gabriel × Notion

@@ -103,7 +103,7 @@ const STEPS = [
     n: "01",
     title: "Write the brief",
     body:
-      "Describe who the persona is — how they speak, what they know, what they're allowed to do. Plain language in, character out.",
+      "Tell us who the persona is: how they speak, what they know, and what they're allowed to do. Plain language in, character out.",
     points: ["Personality & voice", "Knowledge base (RAG)", "Guardrails"],
     image: "https://lab.anam.ai/persona_thumbnails/mia_studio.png",
   },
@@ -111,7 +111,7 @@ const STEPS = [
     n: "02",
     title: "Forge it in the Studio",
     body:
-      "Pick a face and a voice, wire up the tools they'll use on the job — helpdesk, CRM, calendar — and preview the conversation live.",
+      "Pick a face and a voice, wire up the tools they'll use on the job, like your helpdesk, CRM, and calendar, then preview the conversation live.",
     points: ["Face & voice", "Zendesk · Notion · CRM tools", "Live preview"],
     image: "https://lab.anam.ai/persona_thumbnails/gabriel_table.png",
   },
@@ -119,7 +119,7 @@ const STEPS = [
     n: "03",
     title: "Deploy & talk",
     body:
-      "Every persona gets a shareable talk page. Visitors just start talking — leads and tickets land in your systems mid-conversation.",
+      "Every persona gets a shareable talk page. Visitors just start talking, and leads and tickets land in your systems mid-conversation.",
     points: ["Shareable talk page", "Leads via transcripts", "No forms, no waitlist"],
     image: "https://lab.anam.ai/persona_thumbnails/anne_home.png",
   },
@@ -134,7 +134,7 @@ const USE_CASES = [
     time: "Live now",
     title: "Lead generation",
     body:
-      "Talks to prospects like a person, not a form. He learns what they need, captures the lead into the CRM mid-conversation, and books the meeting before the call ends — name, email, need, time, done.",
+      "Talks to prospects like a person, not a form. He learns what they need, captures the lead into the CRM mid-conversation, and books the meeting before the call ends. Name, email, need, time, done.",
     poster: "https://lab.anam.ai/persona_thumbnails/gabriel_table.png",
     wide: true,
   },
@@ -182,7 +182,7 @@ const VERTICALS = [
 const FAQS = [
   {
     q: "What exactly is a persona?",
-    a: "A real-time embodied agent — a face and a voice rendered live, backed by a language model, your knowledge base, and tools. You talk to it the way you'd talk to a person on a video call, and it can act while it talks: open tickets, capture leads, book meetings.",
+    a: "A persona is a face and a voice rendered live in real time, backed by a language model, your knowledge base, and tools. You talk to it the way you'd talk to a person on a video call, and it can act while it talks: open tickets, capture leads, book meetings.",
   },
   {
     q: "How do leads get captured without a form?",
@@ -190,15 +190,19 @@ const FAQS = [
   },
   {
     q: "What is Zek'thar?",
-    a: "Our first shipped model — an alien field observer that lives on macOS. It sees your screen, talks with you in real time, and acts on your behalf. It's the proof of the three hard problems we've solved: low-latency avatar rendering, persistent multi-modal context, and reliable computer use.",
+    a: "Zek'thar is our first shipped model, an alien field observer that lives on macOS. He sees your screen, talks with you in real time, and acts on your behalf. He's the proof behind the three hard problems we've solved: low-latency avatar rendering, persistent multi-modal context, and reliable computer use.",
+  },
+  {
+    q: "What is Kara?",
+    a: "Kara is our newest model, a design partner you talk to. Describe the site you want ('a landing page for a medspa, light and airy') and she designs and publishes a finished page while you're still on the call. She's live right now. No signup, just a microphone.",
   },
   {
     q: "Does it need my microphone?",
-    a: "Yes — a live conversation needs your voice. Your browser asks for microphone access when you start a session, and only for the duration of the call. No signup is required to talk to any deployed persona.",
+    a: "Yes, a live conversation needs your voice. Your browser asks for microphone access when you start a session, and only for the duration of the call. You don't need to sign up to talk to any deployed persona.",
   },
   {
     q: "Can I build my own persona?",
-    a: "That's what the Studio is for. Write a brief, pick a face and voice, attach knowledge and tools, and deploy to a shareable talk page — the same pipeline that built Gabriel, Mia, and Anne.",
+    a: "That's what the Studio is for. Write a brief, pick a face and voice, attach knowledge and tools, and deploy to a shareable talk page. It's the same pipeline we used to build Gabriel, Mia, and Anne.",
   },
 ];
 
@@ -450,9 +454,9 @@ export default function App() {
             className="mx-auto mt-6 max-w-2xl text-[15px] leading-relaxed text-white/60 sm:text-[16px]"
           >
             Embodied, real-time agents that watch you and act alongside you.
-            Building this takes three hard problems — low-latency avatar
+            Building them means solving three hard problems: low-latency avatar
             rendering, persistent multi-modal context, and reliable computer
-            use. At Goblin Labs, we have cracked all three.
+            use. At Goblin Labs, we've cracked all three.
           </motion.p>
 
           <motion.div {...fadeUp(0.4)} className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -486,7 +490,7 @@ export default function App() {
               className="inline-block"
             >
               <img
-                alt="Goblin Labs — AI personas - Frontier lab for building and deploying AI personas | Product Hunt"
+                alt="Goblin Labs AI personas: Frontier lab for building and deploying AI personas | Product Hunt"
                 width={210}
                 height={45}
                 src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1166179&theme=dark&t=1780903902092"
@@ -550,7 +554,7 @@ export default function App() {
             </div>
           </div>
           <p className="mt-3 text-center text-[11px] text-white/35">
-            Gabriel, Mia, and Anne — rendered live in the lab. Click one and have a conversation, no signup.
+            That's Gabriel, Mia, and Anne, rendered live in the lab. Click one and say hello, no signup needed.
           </p>
         </motion.div>
       </section>
@@ -568,33 +572,26 @@ export default function App() {
             Meet <span className="font-serif-italic">Zek'thar.</span>
           </motion.h2>
           <motion.p {...fadeUp(0.2)} className="mx-auto mt-4 max-w-xl text-center text-[15px] leading-relaxed text-white/55">
-            Our first shipped model — an alien field observer that sees, talks,
+            Our first shipped model, an alien field observer that sees, talks,
             and acts on macOS in real time.
           </motion.p>
 
           <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-12">
-            {/* Field log 1 */}
-            <motion.div {...fadeUp(0.15)} className="md:col-span-3">
+            {/* Living portrait */}
+            <motion.div {...fadeUp(0.15)} className="md:col-span-7">
               <div className="h-full rounded-2xl border border-dashed border-white/12 bg-white/[0.02] p-2">
-                <div className="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-black">
-                  <iframe
-                    src="https://www.youtube.com/embed/g_MuD10zfJ8?autoplay=1&mute=1&loop=1&playlist=g_MuD10zfJ8&controls=1&modestbranding=1&rel=0&playsinline=1"
-                    title="Zek'thar, alien field observer on macOS"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    loading="lazy"
-                    className="absolute inset-0 h-full w-full"
+                <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
+                  <InViewVideo
+                    src="/avatars/zekthar-loop.mp4"
+                    poster="/avatars/zekthar-poster.jpg"
+                    className="h-full w-full object-cover"
                   />
-                </div>
-                <div className="px-3 py-3">
-                  <div className="text-[13px] font-medium">Field log 001</div>
-                  <div className="text-[11px] text-white/40">Zek'thar observes macOS</div>
                 </div>
               </div>
             </motion.div>
 
-            {/* Center copy + CTA panel */}
-            <motion.div {...fadeUp(0.25)} className="md:col-span-6">
+            {/* Copy + CTA panel */}
+            <motion.div {...fadeUp(0.25)} className="md:col-span-5">
               <div className="flex h-full flex-col gap-4">
                 <a
                   href="https://zekthar-landing.vercel.app/"
@@ -611,8 +608,8 @@ export default function App() {
                   <div className="text-[14px] font-medium">Sees. Talks. Acts.</div>
                   <p className="mt-2 text-[13.5px] leading-relaxed text-white/55">
                     Zek'thar watches your screen, holds a real-time conversation
-                    about what's on it, and drives the machine on your behalf —
-                    the three problems, solved in one character.
+                    about what's on it, and drives the machine on your behalf.
+                    Three hard problems, solved in one character.
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
@@ -627,23 +624,74 @@ export default function App() {
                 </div>
               </div>
             </motion.div>
+          </div>
+        </div>
+      </section>
 
-            {/* Field log 2 */}
-            <motion.div {...fadeUp(0.35)} className="md:col-span-3">
+      {/* Kara — just released */}
+      <section id="kara" className="px-4 py-20 sm:px-6 md:py-28">
+        <div className="mx-auto max-w-[1160px]">
+          <motion.div {...fadeUp(0)}>
+            <SectionBadge>Just released</SectionBadge>
+          </motion.div>
+          <motion.h2
+            {...fadeUp(0.1)}
+            className="mt-6 text-balance text-center text-[clamp(1.9rem,4vw,3rem)] font-medium tracking-[-0.025em]"
+          >
+            Meet <span className="font-serif-italic">Kara.</span>
+          </motion.h2>
+          <motion.p {...fadeUp(0.2)} className="mx-auto mt-4 max-w-xl text-center text-[15px] leading-relaxed text-white/55">
+            Our newest model, a design partner you talk to. Ask her for a
+            website out loud and a finished page lands in her Files box seconds
+            later.
+          </motion.p>
+
+          <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-12">
+            {/* Living portrait */}
+            <motion.div {...fadeUp(0.15)} className="md:col-span-7">
               <div className="h-full rounded-2xl border border-dashed border-white/12 bg-white/[0.02] p-2">
-                <div className="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-black">
-                  <iframe
-                    src="https://www.youtube.com/embed/YRdXL9UkWbM?autoplay=1&mute=1&loop=1&playlist=YRdXL9UkWbM&controls=1&modestbranding=1&rel=0&playsinline=1"
-                    title="Zek'thar, second field log"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    loading="lazy"
-                    className="absolute inset-0 h-full w-full"
+                <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
+                  <InViewVideo
+                    src="/avatars/kara-beam-loop.mp4"
+                    poster="/avatars/kara.png"
+                    className="h-full w-full object-cover"
                   />
                 </div>
-                <div className="px-3 py-3">
-                  <div className="text-[13px] font-medium">Field log 002</div>
-                  <div className="text-[11px] text-white/40">Second observation run</div>
+              </div>
+            </motion.div>
+
+            {/* Copy + CTA panel */}
+            <motion.div {...fadeUp(0.25)} className="md:col-span-5">
+              <div className="flex h-full flex-col gap-4">
+                <a
+                  href="https://drbinna--kara-3-kara.modal.run"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-1 items-center justify-center rounded-2xl border border-dashed border-white/12 bg-white/[0.02] px-8 py-14 transition-colors hover:bg-white/[0.04]"
+                >
+                  <span className="inline-flex items-center gap-2 text-[clamp(1.25rem,2.5vw,1.75rem)] font-medium tracking-tight">
+                    Talk to Kara
+                    <ArrowUpRight className="h-5 w-5 opacity-50 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100" />
+                  </span>
+                </a>
+                <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.02] px-6 py-6">
+                  <div className="text-[14px] font-medium">Speak the brief. Ship the page.</div>
+                  <p className="mt-2 text-[13.5px] leading-relaxed text-white/55">
+                    Tell her the site you want: the brand, the mood, what it
+                    needs. She designs it mid-conversation, tells you when
+                    it's ready, and hands you the finished page as a
+                    downloadable file.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  {["Real-time voice", "Designs on request", "Instant publish"].map((s) => (
+                    <div
+                      key={s}
+                      className="rounded-xl border border-dashed border-white/12 bg-white/[0.02] px-3 py-3 text-center text-[11px] uppercase tracking-[0.1em] text-white/50"
+                    >
+                      {s}
+                    </div>
+                  ))}
                 </div>
               </div>
             </motion.div>
@@ -728,7 +776,7 @@ export default function App() {
           </motion.h2>
           <motion.p {...fadeUp(0.2)} className="mx-auto mt-4 max-w-xl text-center text-[15px] leading-relaxed text-white/55">
             Built and deployed with the exact pipeline you get in the Studio.
-            No demo video, no waitlist — click one and talk right now.
+            No demo video, no waitlist. Click one and talk right now.
           </motion.p>
 
           <div className="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -745,7 +793,7 @@ export default function App() {
                   <div className="aspect-[4/3] h-full w-full sm:aspect-auto sm:min-h-[240px]">
                     <img
                       src={u.poster}
-                      alt={`${u.name} — ${u.title} persona`}
+                      alt={`${u.name}, ${u.title} persona`}
                       loading="lazy"
                       decoding="async"
                       className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
@@ -798,7 +846,7 @@ export default function App() {
           </div>
 
           <p className="mt-10 text-center text-[11px] leading-relaxed text-white/35">
-            Live sessions run on real-time avatar synthesis — your browser will
+            Live sessions run on real-time avatar synthesis. Your browser will
             ask for microphone access when you start a conversation.
           </p>
         </div>

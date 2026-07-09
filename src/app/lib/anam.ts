@@ -67,7 +67,7 @@ const GABRIEL_PROMPT = `You are Gabriel, a lead-generation persona for Goblin La
 // platform defaults, which are always valid.
 export const VIRTUAL_PERSONAS: Record<string, PersonaConfig> = {
   "e6db066d-80f1-49c6-96e9-a9c10af18397": {
-    name: "Gabriel — Lead Gen",
+    name: "Gabriel · Lead Gen",
     // Gabriel's own avatar in the account (not the platform default). The wiped
     // persona record pointed at this; we hardcode it so his face survives.
     avatarId: "6cc28442-cccd-42a8-b6e4-24b7210a09c5", // "Gabriel"

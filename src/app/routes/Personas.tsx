@@ -91,8 +91,8 @@ export default function Personas() {
         ) : rows.length === 0 ? (
           <div className="rounded-xl border border-border/60 p-6">
             <p className="text-[13px] text-muted-foreground">
-              Nothing deployed yet. Build one in the Studio and hit Deploy — it
-              will show up here with its share link.
+              Nothing deployed yet. Build one in the Studio and hit Deploy, and
+              it will show up here with its share link.
             </p>
             <Link
               to="/studio"

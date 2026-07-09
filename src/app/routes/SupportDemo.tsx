@@ -120,7 +120,7 @@ export default function SupportDemo() {
           <video ref={videoRef} id="anne-demo-stage" autoPlay playsInline className="absolute inset-0 h-full w-full object-cover" />
           {phase !== "live" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background/70 px-6 text-center backdrop-blur-sm">
-              <div className="text-[1.5rem] font-medium tracking-tight">Anne — Support</div>
+              <div className="text-[1.5rem] font-medium tracking-tight">Anne · Support</div>
               {phase === "connecting" ? (
                 <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" /> Connecting…
@@ -133,7 +133,7 @@ export default function SupportDemo() {
               ) : (
                 <>
                   <p className="max-w-[300px] text-[13px] leading-relaxed text-muted-foreground">
-                    Report a problem, ask about an existing ticket, or give her an update — and watch the panel as she works your Zendesk.
+                    Report a problem, ask about an existing ticket, or give her an update, then watch the panel as she works your Zendesk.
                   </p>
                   <button onClick={start} className="inline-flex items-center gap-2 rounded-full bg-foreground px-7 py-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-background">
                     <Sparkles className="h-4 w-4" /> Start conversation
@@ -180,7 +180,7 @@ export default function SupportDemo() {
             <section className="rounded-2xl border border-dashed border-border/60 p-4">
               <h2 className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">One-time wiring</h2>
               <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                Wire up before recording; tear down after. Keep your Zendesk dashboard open in another tab — changes land there live.
+                Wire up before recording; tear down after. Keep your Zendesk dashboard open in another tab and you'll see changes land there live.
               </p>
               <button onClick={() => runSetup(false)} disabled={settingUp} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2 text-[12px] hover:bg-foreground/5 disabled:opacity-50">
                 {settingUp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wrench className="h-3.5 w-3.5" />} Wire up Anne × Zendesk

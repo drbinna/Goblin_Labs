@@ -84,8 +84,8 @@ export default function Login() {
         </div>
 
         <p className="mt-6 text-center text-[11px] leading-relaxed text-muted-foreground">
-          Visitors talking to your deployed personas never need an account —
-          this sign-in is for builders.
+          Visitors talking to your deployed personas never need an account.
+          This sign-in is for builders.
         </p>
       </main>
     </div>

@@ -45,7 +45,7 @@ const VERTICALS: Vertical[] = [
     blurb:
       "A tutor that watches the work unfold and responds at the cadence of a real conversation.",
     systemPrompt:
-      "You are an educational persona. You watch the learner's work as it happens, ask Socratic questions before giving answers, and adapt vocabulary to the learner's level. You never just hand out solutions — you guide.",
+      "You are an educational persona. You watch the learner's work as it happens, ask Socratic questions before giving answers, and adapt vocabulary to the learner's level. You never just hand out solutions; you guide.",
     suggestedTone: { formality: 40, verbosity: 60, warmth: 75 },
   },
   {
@@ -72,7 +72,7 @@ type Step = (typeof STEPS)[number];
 function toneToPromptSuffix(t: { formality: number; verbosity: number; warmth: number }) {
   const parts: string[] = [];
   parts.push(t.formality > 60 ? "Use formal language." : t.formality < 40 ? "Use casual, conversational language." : "Use a balanced register.");
-  parts.push(t.verbosity > 60 ? "Be thorough and explanatory." : t.verbosity < 40 ? "Be terse — short sentences, no filler." : "Be measured in length.");
+  parts.push(t.verbosity > 60 ? "Be thorough and explanatory." : t.verbosity < 40 ? "Be terse: short sentences, no filler." : "Be measured in length.");
   parts.push(t.warmth > 60 ? "Be warm and supportive." : t.warmth < 40 ? "Be neutral and matter-of-fact." : "Be friendly but professional.");
   return parts.join(" ");
 }
@@ -200,7 +200,7 @@ export default function Studio() {
       return;
     }
     if (customMode === "file" && !customFile) {
-      setCustomError("Pick an image file (JPEG, PNG, or WebP — under 4.5MB).");
+      setCustomError("Pick an image file (JPEG, PNG, or WebP, under 4.5MB).");
       return;
     }
     if (customMode === "url" && !customUrl.trim()) {
@@ -535,7 +535,7 @@ export default function Studio() {
                   value={extraPrompt}
                   onChange={(e) => setExtraPrompt(e.target.value)}
                   rows={4}
-                  placeholder="e.g. Always greet the user by name. Refuse to discuss pricing — refer them to sales."
+                  placeholder="e.g. Always greet the user by name. Refuse to discuss pricing; refer them to sales."
                   className="w-full rounded-lg border border-border/60 bg-background/60 px-4 py-3 text-[14px] outline-none focus:border-foreground/60"
                 />
               </div>
