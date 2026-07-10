@@ -10,7 +10,7 @@ import "./styles/index.css";
 // Env var wins so prod can rotate it without a code change.
 const CLERK_PK =
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ??
-  "pk_test_c2tpbGxlZC1mZWxpbmUtNDMuY2xlcmsuYWNjb3VudHMuZGV2JA";
+  "pk_live_Y2xlcmsudXNlZ29ibGluLnh5eiQ";
 
 // Heavy routes load only when visited.
 const Studio = lazy(() => import("./app/routes/Studio.tsx"));

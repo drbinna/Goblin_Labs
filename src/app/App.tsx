@@ -664,7 +664,7 @@ export default function App() {
             <motion.div {...fadeUp(0.25)} className="md:col-span-5">
               <div className="flex h-full flex-col gap-4">
                 <a
-                  href="https://kara-3.fly.dev"
+                  href="https://kara.usegoblin.xyz"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex flex-1 items-center justify-center rounded-2xl border border-dashed border-white/12 bg-white/[0.02] px-8 py-14 transition-colors hover:bg-white/[0.04]"

@@ -4,7 +4,7 @@ import type { VercelRequest } from "@vercel/node";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
 const ISSUER =
-  process.env.CLERK_ISSUER ?? "https://skilled-feline-43.clerk.accounts.dev";
+  process.env.CLERK_ISSUER ?? "https://clerk.usegoblin.xyz";
 
 const JWKS = createRemoteJWKSet(new URL(`${ISSUER}/.well-known/jwks.json`));
 
