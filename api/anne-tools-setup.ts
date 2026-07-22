@@ -6,6 +6,15 @@ import { getUserId } from "./_auth.js";
 
 const ANAM_BASE = "https://api.anam.ai/v1";
 const ANNE_ID = "6b4df3c2-c9ce-49e7-a95b-8816e8216586";
+const MIA_ID = "77b7e33a-c096-4bb4-b70f-bdc988cf8925";
+const MIA_HELP_MARKER = "## Help Center answers";
+const MIA_HELP_SECTION = `
+
+${MIA_HELP_MARKER}
+- When a visitor asks a how-to, product, billing, account, or troubleshooting question, SEARCH ARTICLES first with keywords from their question.
+- If an article answers it, reply from the article in your own words — short and conversational, this is spoken — and offer the link for the full steps.
+- If no article covers it, say so plainly and suggest they reach the team through the site. Never invent an answer or a link.
+- Never claim to have checked tickets or internal systems — articles are your only support source.`;
 const SITE = "https://goblin-labs.vercel.app";
 const LLM_ID = "a7cf662c-2ace-4de1-a21e-ef0fbf144bb7"; // GPT-4o-mini — PUT replaces brain wholesale, so always resend
 
@@ -203,6 +212,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         steps.push(del.ok ? `deleted tool ${name}` : `could not delete ${name} (${del.status})`);
       }
       return res.status(200).json({ ok: true, steps });
+    }
+
+    if (String(req.query.persona ?? "") === "mia") {
+      // Mia mode: attach ONLY the article-search tool and append the Help
+      // Center section — merge with her live persona, never overwrite it.
+      const listResM = await fetch(`${ANAM_BASE}/tools`, { headers });
+      const listBodyM = await listResM.json().catch(() => ({}));
+      if (!listResM.ok) throw new Error(`list tools: ${listResM.status}`);
+      const allTools: any[] = listBodyM.data ?? listBodyM.tools ?? (Array.isArray(listBodyM) ? listBodyM : []);
+      const articleDef = toolDefs(secret).find((d) => d.name === "zendesk_search_articles")!;
+      let artTool = allTools.find((t) => t.name === articleDef.name);
+      if (!artTool) {
+        const cr = await fetch(`${ANAM_BASE}/tools`, { method: "POST", headers, body: JSON.stringify(articleDef) });
+        artTool = await cr.json().catch(() => ({}));
+        if (!cr.ok) throw new Error(`create article tool: ${cr.status}`);
+        steps.push("created zendesk_search_articles tool");
+      } else steps.push("zendesk_search_articles tool exists");
+
+      const getRes = await fetch(`${ANAM_BASE}/personas/${MIA_ID}`, { headers });
+      const mia = await getRes.json().catch(() => ({}));
+      if (!getRes.ok) throw new Error(`get Mia: ${getRes.status}`);
+      const cur: string = mia.brain?.systemPrompt ?? mia.systemPrompt ?? "";
+      const newPrompt = cur.includes(MIA_HELP_MARKER) ? cur : cur + MIA_HELP_SECTION;
+      const curIds: string[] = (mia.tools ?? []).map((t: any) => t.id ?? t).filter(Boolean);
+      const ids = curIds.includes(artTool.id) ? curIds : [...curIds, artTool.id];
+      const miaLlm = mia.brain?.llmId ?? mia.llmId;
+      const putM = await fetch(`${ANAM_BASE}/personas/${MIA_ID}`, {
+        method: "PUT", headers,
+        body: JSON.stringify({
+          name: mia.name ?? "Mia — Lab Concierge",
+          ...(miaLlm ? { llmId: miaLlm } : {}),
+          toolIds: ids,
+          brain: { systemPrompt: newPrompt, ...(miaLlm ? { llmId: miaLlm } : {}) },
+        }),
+      });
+      if (!putM.ok) throw new Error(`update Mia: ${putM.status} ${(await putM.text()).slice(0, 200)}`);
+      steps.push("Mia: help-center tool attached + prompt section merged");
+      return res.status(200).json({ ok: true, steps, toolId: artTool.id });
     }
 
     // Existing tools (idempotency)
