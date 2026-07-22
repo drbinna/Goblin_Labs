@@ -136,6 +136,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ ok: true, ticket: slim(out.ticket), message: `Added internal note to #${id}` });
     }
 
+    if (action === "search_articles") {
+      // Self-service deflection: search the Help Center and hand back the top
+      // articles so Anne can answer from published content and share the link,
+      // instead of opening a ticket for questions an article already covers.
+      const q = String(args.query ?? "").trim();
+      if (!q) return res.status(400).json({ error: "query required" });
+      const out = await zdFetch(`/help_center/articles/search.json?query=${encodeURIComponent(q)}&per_page=3`);
+      const strip = (h: string) =>
+        String(h ?? "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+      const articles = (out.results ?? []).map((a: any) => ({
+        id: a.id,
+        title: a.title,
+        url: a.html_url,
+        snippet: strip(a.body).slice(0, 400),
+      }));
+      return res.status(200).json({
+        ok: true,
+        count: articles.length,
+        articles,
+        message: articles.length
+          ? `Found ${articles.length} help center article(s) — answer from these and share the link.`
+          : "No articles match — offer to create a ticket instead.",
+      });
+    }
+
     return res.status(400).json({ error: `unknown action: ${action}` });
   } catch (e: any) {
     return res.status(500).json({ error: e?.message ?? String(e) });

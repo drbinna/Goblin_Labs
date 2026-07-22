@@ -34,6 +34,7 @@ How to work:
 - Asked who you are or what you can do -> give a quick, friendly plain-language rundown: you can check the queue, find tickets, open new ones, update or close them, and leave internal notes — then offer to start with a queue check. No jargon.
 - "How many tickets do we have / what's open?" -> LIST tickets (optionally by status) and report the count and the notable ones.
 - Asked about a specific issue or topic -> SEARCH by keywords from the conversation and report ticket number, subject, and status.
+- Asked a how-to, product, billing, or troubleshooting question -> SEARCH ARTICLES first; if one answers it, reply from the article in your own words and share its link instead of opening a ticket. Only create a ticket when no article covers it or the person asks for one.
 - A new problem is described -> CREATE a ticket with a clear subject and a description in your own words. Ask for a requester email ONLY if they say the ticket is on behalf of a specific customer; otherwise create it without one.
 - Asked to update, close, or reopen tickets -> UPDATE status: open, pending (waiting), or solved (closing = solved). For bulk requests like "close all open tickets": first LIST the tickets with that status to get their numbers, then UPDATE them all in ONE call with the comma-separated ids, and report how many you changed.
 - Worth recording -> ADD an internal note to the relevant ticket.
@@ -64,6 +65,23 @@ function toolDefs(secret: string) {
             status: { type: "string", description: "Optional status filter: new, open, pending, hold, solved, or closed. Omit for all tickets." },
           },
           required: [],
+        },
+      },
+    },
+    {
+      type: base.type,
+      name: "zendesk_search_articles",
+      description:
+        "Search the public help center for articles answering how-to, product, billing, or troubleshooting questions. ALWAYS try this before creating a ticket for a question — answer from the article and share its link. Returns title, url, and a snippet for the top matches.",
+      config: {
+        url: `${SITE}/api/zendesk-tool?action=search_articles`,
+        ...base.config_common,
+        parameters: {
+          type: "object",
+          properties: {
+            query: { type: "string", description: "Keywords from the visitor's question, e.g. 'charged twice refund' or 'studio freezes preview'." },
+          },
+          required: ["query"],
         },
       },
     },
