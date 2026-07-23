@@ -23,8 +23,8 @@ import {
   Zap,
 } from "lucide-react";
 import { ImageWithFallback } from "@/app/components/figma/ImageWithFallback";
-import goblinLogo from "@/imports/ChatGPT_Image_May_15__2026__02_03_01_AM.png";
-import founderPortrait from "@/imports/founder-portrait.jpg";
+import goblinLogo from "@/assets/goblin-logo.png";
+import founderPortrait from "@/assets/founder-portrait.jpg";
 
 const NAV = [
   { label: "Home", href: "#top" },
