@@ -5,6 +5,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { knowledgeCollection, chunkText, htmlToText, getClient } from "./_rag.js";
 import { getUserId } from "./_auth.js";
+import { safeFetch } from "./_net.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
@@ -34,12 +35,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let sourceTitle = (title ?? "").trim();
 
     if (!raw && url) {
-      const u = new URL(url); // throws on invalid
-      if (!/^https?:$/.test(u.protocol)) return res.status(400).json({ error: "http(s) URLs only" });
-      const page = await fetch(u.toString(), {
-        headers: { "user-agent": "GoblinLabs-KnowledgeBot/1.0" },
-        redirect: "follow",
-      });
+      let u: URL;
+      try {
+        u = new URL(url);
+      } catch {
+        return res.status(400).json({ error: "invalid url" });
+      }
+      // safeFetch rejects private/loopback/link-local hosts (incl. the cloud
+      // metadata IP) and re-validates each redirect hop — SSRF guard.
+      let page: Response;
+      try {
+        page = await safeFetch(u.toString(), {
+          headers: { "user-agent": "GoblinLabs-KnowledgeBot/1.0" },
+        });
+      } catch {
+        return res.status(400).json({ error: "url could not be fetched" });
+      }
       if (!page.ok) return res.status(400).json({ error: `fetch failed: ${page.status}` });
       raw = htmlToText(await page.text());
       if (!sourceTitle) sourceTitle = u.hostname + u.pathname;
@@ -60,6 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ ok: true, sourceTitle, chunks: chunks.length });
   } catch (e: any) {
-    return res.status(500).json({ error: e?.message ?? String(e) });
+    console.error("[rag-ingest]", e?.message ?? e);
+    return res.status(500).json({ error: "ingest failed" });
   }
 }

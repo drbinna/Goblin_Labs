@@ -14,6 +14,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { leadsCollection, type Lead, type LeadUtm } from "./_leads.js";
 import { createNotionLead } from "./_notion.js";
+import { getUserId } from "./_auth.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -39,7 +40,23 @@ const str = (v: unknown, max = 300) =>
 // Served at /api/leads via a vercel.json rewrite. Lives here rather than in its
 // own api/leads.ts because this project hits a deploy-time serverless-function
 // ceiling at 16 functions; folding read+write into one keeps us under it.
+// The read view exposes lead PII (names, emails, companies), so it is never
+// public. Callers must be signed in; if LEADS_OPERATOR_IDS is set (comma-
+// separated Clerk user ids) only those operators pass. The public site never
+// calls this GET — only the operator dashboard does — so gating it is invisible
+// to visitors.
+async function authorizeOperator(req: VercelRequest): Promise<boolean> {
+  const userId = await getUserId(req);
+  if (!userId) return false;
+  const allow = (process.env.LEADS_OPERATOR_IDS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return allow.length === 0 ? true : allow.includes(userId);
+}
+
 async function readLeads(req: VercelRequest, res: VercelResponse) {
+  if (!(await authorizeOperator(req))) return res.status(401).json({ error: "operator sign-in required" });
   const q = req.query;
   const one = (v: unknown) => (Array.isArray(v) ? v[0] : v);
   const limit = Math.min(Math.max(parseInt(String(one(q.limit) ?? "50"), 10) || 50, 1), 200);
@@ -118,7 +135,8 @@ async function readLeads(req: VercelRequest, res: VercelResponse) {
       leads,
     });
   } catch (e: any) {
-    return res.status(500).json({ error: e?.message ?? String(e) });
+    console.error("[lead-capture]", e?.message ?? e);
+    return res.status(500).json({ error: "server error" });
   }
 }
 
@@ -216,6 +234,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(400).json({ error: `unknown event: ${event}` });
   } catch (e: any) {
-    return res.status(500).json({ error: e?.message ?? String(e) });
+    console.error("[lead-capture]", e?.message ?? e);
+    return res.status(500).json({ error: "server error" });
   }
 }
