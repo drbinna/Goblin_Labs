@@ -1,6 +1,8 @@
-<img width="1254" height="1254" alt="Goblin Labs" src="https://github.com/user-attachments/assets/7260b353-e7cd-4374-baa1-f2d75fd4cb59" />
+<p align="center">
+  <img src="public/favicon-192.png" width="96" height="96" alt="Goblin Labs" />
+</p>
 
-# Goblin Labs
+<h1 align="center">Goblin Labs</h1>
 
 **The next decade of agents will look more like people.**
 
