@@ -1,33 +1,40 @@
-
-<img width="1254" height="1254" alt="ChatGPT Image May 15, 2026, 02_03_01 AM" src="https://github.com/user-attachments/assets/7260b353-e7cd-4374-baa1-f2d75fd4cb59" />
-
-
+<img width="1254" height="1254" alt="Goblin Labs" src="https://github.com/user-attachments/assets/7260b353-e7cd-4374-baa1-f2d75fd4cb59" />
 
 # Goblin Labs
 
 **The next decade of agents will look more like people.**
 
-Goblin Labs is an AI research lab building embodied, real-time AI personas — agents that see your screen, talk with you, and act alongside you. We're solving three hard problems: low-latency avatar rendering, persistent multi-modal context, and reliable computer use.
+Goblin Labs is an AI research lab building embodied, real-time AI personas —
+agents that see your screen, talk with you, and act alongside you. We're
+solving three hard problems: low-latency avatar rendering, persistent
+multi-modal context, and reliable computer use.
 
-## What We've Built
+This repo is the lab's homepage, live at **[usegoblin.xyz](https://www.usegoblin.xyz)**.
 
-**Zek'thar** — Our first shipped model. An alien field observer that can see, talk, and act on macOS in real time.
+## The builds
 
-→ [Try Zek'thar](https://zekthar-landing.vercel.app/)
+| Persona | What it is | Status |
+|---|---|---|
+| **[Kara](https://kara.usegoblin.xyz)** | A design partner you talk to. Describe the site you want and she designs and publishes a finished page while you're still on the call. | **Live** — [repo](https://github.com/usegoblin-xyz/Kara-3) |
+| **[Zek'thar](https://zekthar-landing.vercel.app/)** | Our first shipped model: an alien field observer on macOS that sees your screen, talks in real time, and acts on your behalf. | Shipped |
+| **[Pulse](https://usegoblin-xyz.github.io/pulse/)** | The agent on your screen that fills the forms, finds the buttons, and walks you through the web's most stubborn sites. | In development — [repo](https://github.com/usegoblin-xyz/pulse) |
+| **Gabriel, Mia & Anne** | Studio-built personas rendered live on the homepage — Anne runs the support desk with tools attached. Click one and say hello, no signup needed. | Live on the site |
+
+The **Studio** is the pipeline behind the smaller personas: write a brief,
+pick a face and voice, attach knowledge and tools, deploy to a shareable talk
+page.
 
 ## Verticals
 
-We're building persona libraries tailored to specific industries:
+Persona libraries tailored to specific industries: **healthcare** (triage,
+follow-up, long-running care plans), **education** (tutors that watch the work
+as it unfolds), and **engineering** (pair-programmers that read the diff and
+stay in context across the session).
 
-- **Healthcare** — Personas that triage, follow up, and accompany patients through long-running care plans
-- **Education** — Tutors that watch the work as it unfolds and respond at the cadence of a real conversation
-- **Engineering** — Pair-programming personas that read the diff, watch the test runner, and stay in context across the whole session
+## Development
 
-## Tech Stack
-
-Vite · React · TypeScript · Tailwind CSS · shadcn/ui · Framer Motion
-
-## Getting Started
+Vite · React · TypeScript · Tailwind CSS · shadcn/ui · Framer Motion —
+deployed on Vercel (`vercel.json`, serverless functions in `api/`).
 
 ```bash
 npm install
